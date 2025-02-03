@@ -1,0 +1,125 @@
+/*
+/* Reset default styles 
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Arial', sans-serif;
+    background: url('./assets/shutterstock_605300333_FEAT.jpg');
+    background-size:contain; 
+    color: #fffdfd;
+    line-height: 1.6;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .contact-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4); 
+    border-radius: 15px;
+    box-shadow: #555;
+    z-index: -1; 
+  }
+  
+  
+  .contact-container:hover {
+    transform: perspective(2000px) rotateY(5deg) rotateX(5deg);
+  }
+  
+  
+  .contact-header h1 {
+    text-align: center;
+    color: #350566;
+    font-size: 40px;
+    font-weight: 700;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+  }
+  
+  .organization-info h2 {
+    color: #050505;
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 1px;
+    background-color: #fffdfd;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.15);
+  }
+  
+  .organization-info p {
+    font-size: 18px;
+    color: #070707;
+    background: #fffdfd;
+    line-height: 1.8;
+  }
+  
+
+  .contact-details h3 {
+    color: #3498db;
+    background-color: #fffdfd;
+    font-size: 28px;
+    font-weight: 600;
+    margin-top: 40px;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.15);
+  }
+  
+  .contact-details p {
+    font-size: 18px;
+    color: #555;
+    background-color: #fffdfd;
+    margin-bottom: 1px;
+    transition: color 0.3s ease;
+  }
+  
+  .contact-details p:hover {
+    color: #3498db;
+  }
+  
+  
+  .contact-details a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 5px 0;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+  
+  .contact-details a:hover {
+    border-bottom: 2px solid #3498db;
+    text-decoration: underline;
+    transform: translateY(-2px);
+  }
+  
+  
+  .contact-details a:active {
+    transform: translateY(2px);
+  }
+  
+  
+  @media (max-width: 768px) {
+    .contact-container {
+        padding: 30px;
+    }
+    .contact-header h1 {
+        font-size: 32px;
+    }
+    .organization-info h2 {
+        font-size: 28px;
+    }
+    .contact-details h3 {
+        font-size: 24px;
+        background-color: #fffdfd;
+    }
+  }  
+*/
