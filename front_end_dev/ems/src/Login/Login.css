@@ -1,0 +1,136 @@
+body {
+    font-family: 'Arial', sans-serif; 
+  }
+  .modal-overlay {
+    position: fixed;  
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; 
+    background: rgba(0, 0, 0, 0.5); 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; 
+    
+  }
+  
+
+  .form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    position: relative;
+  }
+  
+ 
+
+.close-btn {
+    position: absolute;
+    top: 1px;  
+    right: 1px; 
+    width: 30px;  
+    height: 30px; /* Set the height to make it square */
+    font-size: 20px; /* Set a smaller font size */
+    background-color: transparent;  /* Button background color */
+    border: none;
+    border-radius: 5px;  /* Optional rounded corners */
+    color: #333;  /* Text color */
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Center the '×' inside the button */
+    padding: 0; /* Remove any internal padding */
+    z-index: 1; /* Ensure it's above other content */
+  }
+  
+  .close-btn:hover {
+    background-color: transparent; /* Slightly darker on hover */
+  }
+  
+  .close-btn:focus {
+    outline: none; /* Remove the outline on focus */
+  }
+  
+  
+  
+
+  .form-toggle {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .form-toggle button {
+    width: 50%;
+    padding: 10px;
+    background-color: #f3f3f3;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 10px 10px 0 0;
+  }
+  
+  .form-toggle button:focus {
+    outline: none; 
+  }
+  
+  .form-toggle .active {
+    background-color: #42b883;
+    color: white;
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form h2 {
+    margin-bottom: 20px;
+  }
+  
+  .form input {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .form button {
+    padding: 10px;
+    background-color:#42b883;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .form button:active {
+    transform: scale(0.98); 
+  }
+  
+  .form button:focus {
+    outline: none;
+  }
+  
+  .form button:hover {
+    background-color: #36a174; 
+  }
+  
+  .form a {
+    color: #5ad0cc;
+    text-decoration: none;
+    font-size: 15px;
+    text-align: right;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  
+  .form p {
+    text-align: center;
+    padding-top: 10px;
+  }
+  
