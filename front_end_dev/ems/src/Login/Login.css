@@ -32,26 +32,26 @@ body {
     top: 1px;  
     right: 1px; 
     width: 30px;  
-    height: 30px; /* Set the height to make it square */
-    font-size: 20px; /* Set a smaller font size */
-    background-color: transparent;  /* Button background color */
+    height: 30px; 
+    font-size: 20px;
+    background-color: transparent;  
     border: none;
-    border-radius: 5px;  /* Optional rounded corners */
-    color: #333;  /* Text color */
+    border-radius: 5px;  
+    color: #333;  
     cursor: pointer;
     display: flex;
     justify-content: center;
-    align-items: center; /* Center the '×' inside the button */
-    padding: 0; /* Remove any internal padding */
-    z-index: 1; /* Ensure it's above other content */
+    align-items: center; 
+    padding: 0; 
+    z-index: 1; 
   }
   
   .close-btn:hover {
-    background-color: transparent; /* Slightly darker on hover */
+    background-color: transparent; 
   }
   
   .close-btn:focus {
-    outline: none; /* Remove the outline on focus */
+    outline: none; 
   }
   
   
