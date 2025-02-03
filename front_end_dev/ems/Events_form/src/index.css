@@ -1,0 +1,308 @@
+/* General Layout */
+.app-container {
+  font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #ede0e0;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header */
+.app-container h1 {
+  font-size: 32px;
+  color: #1b1b1b;
+  margin-top: 40px;
+}
+
+/* Manager Profile */
+.profile-container {
+  padding: 20px;
+  background-color: #fff;
+  margin: 20px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.2);
+  width: 80%;
+  max-width: 500px;
+  text-align: center; /* Center the text */
+  transition: all 0.3s ease-in-out;
+}
+
+.profile-container:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 8px 48px rgba(0, 0, 0, 0.2);
+}
+
+.profile-container h2 {
+  margin-top: 0;
+  font-size: 40px;
+  font-style: oblique;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  color: #9ac3ec;
+}
+
+/* Profile Info */
+.profile-info {
+  margin-top: 5px;
+}
+
+.profile-info p {
+  font-size: 20px;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  margin: 5px 0;
+  line-height: 1.6;
+  color: #d43d3d;
+}
+
+.profile-info .profile-id {
+  font-weight: bold;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+.profile-info .profile-email {
+  color: #080808;
+}
+
+
+.profile-avatar:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* Event Management */
+.event-management-container {
+  padding: 20px;
+  background-color: #abf8bd;
+  margin: 20px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.2);
+  width: 80%;
+  max-width: 600px;
+  transition: all 0.3s ease-in-out;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', Times, serif
+}
+
+.event-management-container:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 8px 48px rgba(0, 0, 0, 0.2);
+}
+
+.event-management-container h3 {
+  font-size: 24px;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-style:italic;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.event-management-container input,
+.event-management-container textarea {
+  width: 90%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #6406759a;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+input[type="date"] {
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+input[type="date"]:focus {
+  outline: none;
+  border-color: #4A90E2;
+}
+.event-management-container input:focus,
+.event-management-container textarea:focus {
+  outline: none;
+  border-color: #a6b344;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+  transform: translateY(-2px);
+}
+
+.event-management-container button {
+  background-color: #c846df83;;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.event-management-container button:hover {
+  background-color: #227be086;
+  transform: translateY(-2px);
+}
+
+.event-item {
+  background-color: #f9f9f9;
+  padding: 20px;
+  margin: 15px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.event-item:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 8px 48px rgba(0, 0, 0, 0.2);
+}
+
+.event-item h4 {
+  margin-top: 0;
+  font-size: 20px;
+  color: #2c3e50;
+}
+
+.event-item p {
+  font-size: 16px;
+  color: #555;
+}
+
+.event-item button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.event-item button:hover {
+  background-color: #da190b;
+  transform: translateY(-2px);
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-container,
+  .event-management-container {
+    width: 90%;
+  }
+
+  .event-item {
+    padding: 15px;
+  }
+
+  .event-management-container input,
+  .event-management-container textarea {
+    padding: 10px;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* Footer */
+.footer {
+  background-color: #2c3e50;
+  color: white;
+  padding: 20px;
+  width: 100%;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.footer p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Add styling for the Delete button */
+.event-item button.delete-btn {
+  background-color: #f44336; /* Red color for delete */
+  margin-top: 10px;
+}
+
+.event-item button.delete-btn:hover {
+  background-color: #da190b; /* Darker red when hovered */
+}
+/* Button Container */
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Individual Button Styles */
+.button-container a {
+  text-decoration: none; /* Remove underline from links */
+}
+
+.button-container .btn {
+  background-color: #6406759a; /* Same as the profile avatar color */
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  margin: 0 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.919);
+}
+
+/* Hover and Focus Effects */
+.button-container .btn:hover {
+  background-color: #9ac3ec; /* Lighter blue on hover */
+  transform: translateY(-2px);
+}
+
+.button-container .btn:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(100, 6, 117, 0.736); /* Add a focus shadow effect */
+}
+
+/* Responsive Design for Buttons */
+@media (max-width: 768px) {
+  .button-container .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}
+
+/* Styling the calendar container */
+.calendar-container {
+  margin-top: 20px; /* Adds space above the calendar */
+  margin-bottom: 20px; /* Adds space below the calendar */
+  text-align:left;
+  font-family:Georgia, 'Times New Roman', Times, serif;
+  font-size: 20px;
+}
+.react-calendar {
+  border: 2px solid #e05353; /* Adds border around the calendar */
+  border-radius: 8px; /* Rounds the corners */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.849); /* Adds a shadow effect to the calendar */
+  padding: 10px;
+}
+
+.react-calendar__tile {
+  transition: background-color 0.3s ease;
+}
+
+/* Hover effect for the calendar date tiles */
+.react-calendar__tile:hover {
+  background-color: #b1bdb1;
+  color: rgba(15, 15, 15, 0.868);
+  cursor: pointer;
+}
+
+
+/* Style for the selected date*/
+.react-calendar__tile--hasActive {
+  background-color: #df6d43;
+  color: white;
+}
