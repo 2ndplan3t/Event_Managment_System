@@ -82,6 +82,24 @@ const EventManagement = () => {
         onChange={handleEventChange}
         placeholder="Envoy Description"
       ></textarea>
+      <input
+        type="text"
+        name="requiredSkill"
+        value={eventDetails.requiredSkill}
+        onChange={handleEventChange}
+        placeholder="Required Skill"
+      />
+
+      <select
+        name="urgencyLevel"
+        value={eventDetails.urgencyLevel}
+        onChange={handleEventChange}
+      >
+        <option value="">Select Urgency Level</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+      </select>
 
       {/* React Calendar for selecting date */}
       <div className="calendar-container">
@@ -100,6 +118,8 @@ const EventManagement = () => {
           <h4>{event.name}</h4>
           <p><strong>Location:</strong> {event.location}</p>
           <p><strong>Envoy:</strong> {event.envoy}</p>
+          <p><strong>Required Skill:</strong> {event.requiredSkill}</p>
+          <p><strong>Urgency Level:</strong> {event.urgencyLevel}</p>
           <p><strong>Date:</strong> {event.date.toDateString()}</p>
           <p><strong>Volunteers:</strong> {volunteers.filter((v) => v.eventId === event.id).length}</p>
           <p><strong>Managers:</strong> {managers.filter((v) => v.eventId === event.id).length}</p>
