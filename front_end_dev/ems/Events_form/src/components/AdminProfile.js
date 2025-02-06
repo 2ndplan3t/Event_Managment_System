@@ -2,12 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import '../event.css';
 
 const AdminProfile = () => {
   const admin = {
     fullName: "John Doe",
     id: "MGR12345",
-    email: "john.doe@example.com",
+    email: "johndoe@gmai.com",
   };
 
   return (
