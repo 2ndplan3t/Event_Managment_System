@@ -1,7 +1,7 @@
 /*import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
-import Profile from './components/profile.css';
+import { faUserAstronaut } from '@fortawesome/free-solid-svg-icons';
+import './App.css';
 
 const Profile = () => {
   const [manager, setManager] = useState({
@@ -13,6 +13,7 @@ const Profile = () => {
     skills: 'Leadership, Communication, Project Management',
     preferences: 'Remote work, Flexible hours',
     availability: 'Full-time, 9 AM - 5 PM',
+    email: 'johndoe@gmail.com',
     workHistory: [
       {
         jobTitle: 'Event Coordinator',
@@ -34,9 +35,23 @@ const Profile = () => {
     setManager({ ...manager, [name]: value });
   };
 
+  const handleCreateEvent = () => {
+    alert("Create Event button clicked!");
+  };
+
+  const handleLogout = () => {
+    alert("Logged out!");
+  };
+
   return (
     <div className="profile-container">
-      <h2>Manager Profile <FontAwesomeIcon icon={faEnvelope} /></h2>
+      <div className="header">
+        <h2>Admin Profile {<FontAwesomeIcon icon={faUserAstronaut} />}</h2>
+        <div className="button-group">
+          <button onClick={handleCreateEvent} className="create-event-btn">Create Events</button>
+          <button onClick={handleLogout} className="logout-btn">Log Out</button>
+        </div>
+      </div>
 
       <div className="profile-field">
         <p><strong>Full Name:</strong> {manager.fullName}</p>
