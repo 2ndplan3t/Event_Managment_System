@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import '../event.css';
 
 const EventManagement = () => {
   const [events, setEvents] = useState([]);
@@ -8,11 +9,18 @@ const EventManagement = () => {
     name: '',
     location: '',
     envoy: '',
-    volunteers: 0,
+    requiredSkill: '',
+    urgencyLevel: '',
     date: new Date(),
   });
 
-  const [volunteers, setVolunteers] = useState([]);
+  const [volunteers] = useState([
+    { id: 1, name: 'Alice', skill: 'First Aid', available: true },
+    { id: 2, name: 'Bob', skill: 'Logistics', available: true },
+    { id: 3, name: 'Charlie', skill: 'Security', available: true },
+  ]);
+  const [assignedVolunteers, setAssignedVolunteers] = useState([]);
+
   const [managers, setManagers] = useState([]);
 
   const handleEventChange = (e) => {
@@ -30,33 +38,49 @@ const EventManagement = () => {
       name: '',
       location: '',
       envoy: '',
-      volunteers: 0,
-      date: new Date()
+      requiredSkill: '',
+      urgencyLevel: '',
+      date: new Date(),
     });
   };
 
-  const handleAddVolunteer = (eventId) => {
-    const newVolunteers = [...volunteers, { eventId, name: `Volunteer ${volunteers.length + 1}` }];
-    setVolunteers(newVolunteers);
+  const handleAddVolunteer = (volunteerId, eventId) => {
+    // Check if the volunteer is already assigned to the event
+    const isAlreadyAssigned = assignedVolunteers.some(
+      (volunteer) => volunteer.eventId === eventId && volunteer.volunteerId === volunteerId
+    );
+  
+    if (!isAlreadyAssigned) {
+      // Add volunteer to event by updating the volunteers state
+      setAssignedVolunteers([
+        ...volunteers,
+        { volunteerId, eventId }
+      ]);
+    } else {
+      alert('Volunteer is already assigned to this event.');
+    }
   };
+  
 
   const handleAddManager = (eventId) => {
-    const newManager = [...managers, { eventId, name: `Manager ${managers.length + 1}` }];
-    setManagers(newManager);
+    const newManager = { id: Date.now(), eventId, name: `Manager ${managers.length + 1}` };
+    setManagers([...managers, newManager]);
   };
 
-  const handleRemoveVolunteer = (volunteerName) => {
-    setVolunteers(volunteers.filter((volunteer) => volunteer.name !== volunteerName));
+  const handleRemoveVolunteer = (volunteerId, eventId) => {
+    setAssignedVolunteers(assignedVolunteers.filter(
+      (volunteer) => !(volunteer.volunteerId === volunteerId && volunteer.eventId === eventId)
+    ));
   };
 
-  const handleRemoveManager = (managerName) => {
-    setManagers(managers.filter((manager) => manager.name !== managerName));
+  const handleRemoveManager = (managerId) => {
+    setManagers(managers.filter((manager) => manager.id !== managerId));
   };
 
-  // Function to delete event by id
   const handleDeleteEvent = (eventId) => {
     setEvents(events.filter((event) => event.id !== eventId));
-    setVolunteers(volunteers.filter((volunteer) => volunteer.eventId !== eventId)); // Optional: remove volunteers associated with the event
+    setAssignedVolunteers(assignedVolunteers.filter((volunteer) => volunteer.eventId !== eventId)); // Remove volunteers
+    setManagers(managers.filter((manager) => manager.eventId !== eventId)); // Remove managers
   };
 
   return (
@@ -82,13 +106,18 @@ const EventManagement = () => {
         onChange={handleEventChange}
         placeholder="Envoy Description"
       ></textarea>
-      <input
-        type="text"
+
+      <select
         name="requiredSkill"
         value={eventDetails.requiredSkill}
         onChange={handleEventChange}
         placeholder="Required Skill"
-      />
+      >
+        <option value="">Select Required Skill</option>
+        <option value="First Aid">First Aid</option>
+        <option value="Logistics">Logistics</option>
+        <option value="Security">Security</option>
+      </select>
 
       <select
         name="urgencyLevel"
@@ -101,7 +130,6 @@ const EventManagement = () => {
         <option value="High">High</option>
       </select>
 
-      {/* React Calendar for selecting date */}
       <div className="calendar-container">
         <h4>Select Event Date:</h4>
         <Calendar
@@ -121,13 +149,35 @@ const EventManagement = () => {
           <p><strong>Required Skill:</strong> {event.requiredSkill}</p>
           <p><strong>Urgency Level:</strong> {event.urgencyLevel}</p>
           <p><strong>Date:</strong> {event.date.toDateString()}</p>
-          <p><strong>Volunteers:</strong> {volunteers.filter((v) => v.eventId === event.id).length}</p>
-          <p><strong>Managers:</strong> {managers.filter((v) => v.eventId === event.id).length}</p>
-          <button onClick={() => handleAddVolunteer(event.id)}>Add Volunteer</button>
-          <button onClick={() => handleAddManager(event.id)}>Add Manager</button>
-          <button onClick={() => handleRemoveVolunteer(`Volunteer ${volunteers.length}`)}>Remove Volunteer</button>
-          <button onClick={() => handleRemoveManager(`Manager ${managers.length}`)}>Remove Manager</button>
-          {/* Add Delete Event button */}
+
+          <div className="volunteer-matching">
+            <h4>Match Volunteers</h4>
+            {volunteers.filter((volunteer) => volunteer.skill === event.requiredSkill).map((volunteer) => (
+              <div key={volunteer.id} className="volunteer-card">
+                <p><strong>{volunteer.name}</strong></p>
+                <button 
+                  onClick={() => handleAddVolunteer(volunteer.id, event.id)} 
+                  className="button">
+                  Add Volunteer
+                </button>
+                <button onClick={() => handleRemoveVolunteer(volunteer.id)}>Remove Volunteer</button>
+              </div>
+            ))}
+          </div>
+
+
+
+          <div>
+            <strong>Managers:</strong>
+            {managers.filter((m) => m.eventId === event.id).map((manager) => (
+              <div key={manager.id}>
+                <span>{manager.name}</span>
+                <button onClick={() => handleRemoveManager(manager.id)}>Remove Manager</button>
+              </div>
+            ))}
+            <button onClick={() => handleAddManager(event.id)}>Add Manager</button>
+          </div>
+
           <button onClick={() => handleDeleteEvent(event.id)}>Delete Event</button>
         </div>
       ))}
@@ -135,5 +185,5 @@ const EventManagement = () => {
   );
 };
 
-export default EventManagement; // Make sure this is a default export
+export default EventManagement;
 
