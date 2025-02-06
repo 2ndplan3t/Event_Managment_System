@@ -1,7 +1,7 @@
 /*import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserAstronaut } from '@fortawesome/free-solid-svg-icons';
-import './App.css';
+import './profile.css';
 
 const Profile = () => {
   const [manager, setManager] = useState({
