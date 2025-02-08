@@ -8,6 +8,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <EventForm/>
+    <Profile/> //in-order to make this <profile/> work, we need to rotute profile.js from component.
   </React.StrictMode>
 );
 
