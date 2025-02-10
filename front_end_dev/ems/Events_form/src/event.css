@@ -1,23 +1,22 @@
-/* General Layout */
 .app-container {
   font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #ede0e0;
+  background-color: #ebdada;
   color: #333;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Header */
+
 .app-container h1 {
   font-size: 32px;
   color: #1b1b1b;
   margin-top: 40px;
 }
 
-/* Manager Profile */
+
 .profile-container {
   padding: 20px;
   background-color: #fff;
@@ -26,7 +25,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.2);
   width: 80%;
   max-width: 500px;
-  text-align: center; /* Center the text */
+  text-align: center; 
   transition: all 0.3s ease-in-out;
 }
 
@@ -42,7 +41,7 @@
   color: #9ac3ec;
 }
 
-/* Profile Info */
+
 .profile-info {
   margin-top: 5px;
 }
@@ -69,10 +68,10 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
-/* Event Management */
+
 .event-management-container {
   padding: 20px;
-  background-color: #abf8bd;
+  background-color: #acf9be;
   margin: 20px 0;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.2);
@@ -80,7 +79,7 @@
   max-width: 600px;
   transition: all 0.3s ease-in-out;
   font-style: italic;
-  font-family: Georgia, 'Times New Roman', Times, serif
+  font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
 .event-management-container:hover {
@@ -184,7 +183,7 @@ input[type="date"]:focus {
 }
 
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .profile-container,
   .event-management-container {
@@ -206,7 +205,6 @@ input[type="date"]:focus {
   }
 }
 
-/* Footer */
 .footer {
   background-color: #2c3e50;
   color: white;
@@ -221,29 +219,28 @@ input[type="date"]:focus {
   font-size: 14px;
 }
 
-/* Add styling for the Delete button */
+
 .event-item button.delete-btn {
-  background-color: #f44336; /* Red color for delete */
+  background-color: #f44336; 
   margin-top: 10px;
 }
 
 .event-item button.delete-btn:hover {
-  background-color: #da190b; /* Darker red when hovered */
+  background-color: #da190b; 
 }
-/* Button Container */
+
 .button-container {
   display: flex;
   justify-content: center;
   margin-top: 20px;
 }
 
-/* Individual Button Styles */
 .button-container a {
-  text-decoration: none; /* Remove underline from links */
+  text-decoration: none; 
 }
 
 .button-container .btn {
-  background-color: #6406759a; /* Same as the profile avatar color */
+  background-color: #6406759a; 
   color: white;
   padding: 12px 24px;
   border: none;
@@ -255,18 +252,18 @@ input[type="date"]:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.919);
 }
 
-/* Hover and Focus Effects */
+
 .button-container .btn:hover {
-  background-color: #9ac3ec; /* Lighter blue on hover */
+  background-color: #9ac3ec; 
   transform: translateY(-2px);
 }
 
 .button-container .btn:focus {
   outline: none;
-  box-shadow: 0 0 5px rgba(100, 6, 117, 0.736); /* Add a focus shadow effect */
+  box-shadow: 0 0 5px rgba(100, 6, 117, 0.736); 
 }
 
-/* Responsive Design for Buttons */
+
 @media (max-width: 768px) {
   .button-container .btn {
     padding: 10px 20px;
@@ -274,18 +271,18 @@ input[type="date"]:focus {
   }
 }
 
-/* Styling the calendar container */
+
 .calendar-container {
-  margin-top: 20px; /* Adds space above the calendar */
-  margin-bottom: 20px; /* Adds space below the calendar */
+  margin-top: 20px; 
+  margin-bottom: 20px; 
   text-align:left;
   font-family:Georgia, 'Times New Roman', Times, serif;
   font-size: 20px;
 }
 .react-calendar {
-  border: 2px solid #e05353; /* Adds border around the calendar */
-  border-radius: 8px; /* Rounds the corners */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.849); /* Adds a shadow effect to the calendar */
+  border: 2px solid #e05353; 
+  border-radius: 8px; 
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.849); 
   padding: 10px;
 }
 
@@ -293,7 +290,7 @@ input[type="date"]:focus {
   transition: background-color 0.3s ease;
 }
 
-/* Hover effect for the calendar date tiles */
+
 .react-calendar__tile:hover {
   background-color: #b1bdb1;
   color: rgba(15, 15, 15, 0.868);
@@ -301,8 +298,46 @@ input[type="date"]:focus {
 }
 
 
-/* Style for the selected date*/
 .react-calendar__tile--hasActive {
   background-color: #df6d43;
   color: white;
 }
+
+.skills-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; 
+}
+
+.skills-checkboxes label {
+  display: flex;
+  align-items: center; 
+  gap: 5px; 
+  font-size: 16px;
+  cursor: pointer;
+  color: #333;
+}
+
+.skills-checkboxes input[type="checkbox"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #555;
+  border-radius: 3px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+}
+
+.skills-checkboxes input[type="checkbox"]:checked {
+  background-color: #64c1f7;
+  border-color: #64c1f7;
+}
+
+.skills-checkboxes input[type="checkbox"]:hover {
+  background-color: #9ac3ec;
+}
+.skills-checkboxes label {
+  font-size: 14px;
+}
+
