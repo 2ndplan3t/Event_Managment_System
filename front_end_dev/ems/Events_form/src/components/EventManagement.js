@@ -9,23 +9,38 @@ const EventManagement = () => {
     name: '',
     location: '',
     envoy: '',
-    requiredSkill: '',
+    requiredSkills: [], // Store selected skills in an array
     urgencyLevel: '',
     date: new Date(),
   });
 
   const [volunteers] = useState([
-    { id: 1, name: 'Alice', skill: 'First Aid', available: true },
+    { id: 1, name: 'Alice', skill: 'First - Aid', available: true },
     { id: 2, name: 'Bob', skill: 'Logistics', available: true },
     { id: 3, name: 'Charlie', skill: 'Security', available: true },
+    { id: 4, name: 'Danial', skill: 'Social and Cultural', available: true },
   ]);
   const [assignedVolunteers, setAssignedVolunteers] = useState([]);
-
   const [managers, setManagers] = useState([]);
 
+  // Handle input changes for other fields
   const handleEventChange = (e) => {
     const { name, value } = e.target;
-    setEventDetails({ ...eventDetails, [name]: value });
+    if (name === 'requiredSkills') {
+      // Toggle the selected skill
+      const newSkills = [...eventDetails.requiredSkills];
+      if (newSkills.includes(value)) {
+        // If already selected, remove it
+        const index = newSkills.indexOf(value);
+        newSkills.splice(index, 1);
+      } else {
+        // Otherwise, add it
+        newSkills.push(value);
+      }
+      setEventDetails({ ...eventDetails, requiredSkills: newSkills });
+    } else {
+      setEventDetails({ ...eventDetails, [name]: value });
+    }
   };
 
   const handleDateChange = (date) => {
@@ -38,29 +53,25 @@ const EventManagement = () => {
       name: '',
       location: '',
       envoy: '',
-      requiredSkill: '',
+      requiredSkills: [],
       urgencyLevel: '',
       date: new Date(),
     });
   };
 
   const handleAddVolunteer = (volunteerId, eventId) => {
-    // Check if the volunteer is already assigned to the event
     const isAlreadyAssigned = assignedVolunteers.some(
       (volunteer) => volunteer.eventId === eventId && volunteer.volunteerId === volunteerId
     );
-  
     if (!isAlreadyAssigned) {
-      // Add volunteer to event by updating the volunteers state
       setAssignedVolunteers([
-        ...volunteers,
+        ...assignedVolunteers,
         { volunteerId, eventId }
       ]);
     } else {
       alert('Volunteer is already assigned to this event.');
     }
   };
-  
 
   const handleAddManager = (eventId) => {
     const newManager = { id: Date.now(), eventId, name: `Manager ${managers.length + 1}` };
@@ -79,8 +90,8 @@ const EventManagement = () => {
 
   const handleDeleteEvent = (eventId) => {
     setEvents(events.filter((event) => event.id !== eventId));
-    setAssignedVolunteers(assignedVolunteers.filter((volunteer) => volunteer.eventId !== eventId)); // Remove volunteers
-    setManagers(managers.filter((manager) => manager.eventId !== eventId)); // Remove managers
+    setAssignedVolunteers(assignedVolunteers.filter((volunteer) => volunteer.eventId !== eventId)); 
+    setManagers(managers.filter((manager) => manager.eventId !== eventId)); 
   };
 
   return (
@@ -107,17 +118,49 @@ const EventManagement = () => {
         placeholder="Envoy Description"
       ></textarea>
 
-      <select
-        name="requiredSkill"
-        value={eventDetails.requiredSkill}
-        onChange={handleEventChange}
-        placeholder="Required Skill"
-      >
-        <option value="">Select Required Skill</option>
-        <option value="First Aid">First Aid</option>
-        <option value="Logistics">Logistics</option>
-        <option value="Security">Security</option>
-      </select>
+      <h4>Required Skills</h4>
+      {/* Render checkboxes for each skill */}
+      <div className="skills-checkboxes">
+        <label>
+          <input
+            type="checkbox" 
+            name="requiredSkills"
+            value="First - Aid"
+            checked={eventDetails.requiredSkills.includes('First - Aid')}
+            onChange={handleEventChange}
+          />First - Aid
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            name="requiredSkills"
+            value="Logistics"
+            checked={eventDetails.requiredSkills.includes('Logistics')}
+            onChange={handleEventChange}
+          />
+          Logistics
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            name="requiredSkills"
+            value="Security"
+            checked={eventDetails.requiredSkills.includes('Security')}
+            onChange={handleEventChange}
+          />
+          Security
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            name="requiredSkills"
+            value="Social and Cultural"
+            checked={eventDetails.requiredSkills.includes('Social and Cultural')}
+            onChange={handleEventChange}
+          />
+          Social and Cultural
+        </label>
+      </div>
 
       <select
         name="urgencyLevel"
@@ -146,13 +189,15 @@ const EventManagement = () => {
           <h4>{event.name}</h4>
           <p><strong>Location:</strong> {event.location}</p>
           <p><strong>Envoy:</strong> {event.envoy}</p>
-          <p><strong>Required Skill:</strong> {event.requiredSkill}</p>
+          <p><strong>Required Skills:</strong> {event.requiredSkills.join(', ')}</p>
           <p><strong>Urgency Level:</strong> {event.urgencyLevel}</p>
           <p><strong>Date:</strong> {event.date.toDateString()}</p>
 
           <div className="volunteer-matching">
             <h4>Match Volunteers</h4>
-            {volunteers.filter((volunteer) => volunteer.skill === event.requiredSkill).map((volunteer) => (
+            {volunteers.filter((volunteer) =>
+              event.requiredSkills.includes(volunteer.skill) // Check if volunteer skill matches
+            ).map((volunteer) => (
               <div key={volunteer.id} className="volunteer-card">
                 <p><strong>{volunteer.name}</strong></p>
                 <button 
@@ -160,12 +205,10 @@ const EventManagement = () => {
                   className="button">
                   Add Volunteer
                 </button>
-                <button onClick={() => handleRemoveVolunteer(volunteer.id)}>Remove Volunteer</button>
+                <button onClick={() => handleRemoveVolunteer(volunteer.id, event.id)}>Remove Volunteer</button>
               </div>
             ))}
           </div>
-
-
 
           <div>
             <strong>Managers:</strong>
@@ -186,4 +229,5 @@ const EventManagement = () => {
 };
 
 export default EventManagement;
+
 
