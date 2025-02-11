@@ -130,6 +130,7 @@ input[type="date"]:focus {
   border: none;
   padding: 12px 20px;
   border-radius: 8px;
+  margin-top: 10px;
   cursor: pointer;
   font-size: 16px;
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
@@ -303,41 +304,75 @@ input[type="date"]:focus {
   color: white;
 }
 
-.skills-checkboxes {
-  display: flex;
-  flex-direction: column;
-  gap: 6px; 
+/* Custom styling for the react-select component */
+.custom-select__control {
+  border: 2px solid #4caf50;
+  border-radius: 5px;
+  padding: 5px;
+  box-shadow: none;
 }
 
-.skills-checkboxes label {
-  display: flex;
-  align-items: center; 
-  gap: 5px; 
-  font-size: 16px;
-  cursor: pointer;
-  color: #333;
+.custom-select__control--is-focused {
+  border-color: #388e3c;
+  box-shadow: 0 0 5px rgba(56, 142, 60, 0.5);
 }
 
-.skills-checkboxes input[type="checkbox"] {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 2px solid #555;
+.custom-select__menu {
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-select__option {
+  padding: 10px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.custom-select__option--is-selected {
+  background-color: #4caf50 !important;
+  color: white;
+}
+
+.custom-select__option--is-focused {
+  background-color: #c8e6c9;
+}
+
+.custom-select__multi-value {
+  background-color: #4caf50;
+  color: white;
   border-radius: 3px;
-  display: inline-block;
-  position: relative;
+  padding: 2px 5px;
+}
+
+.custom-select__multi-value__label {
+  color: white;
+}
+
+.custom-select__multi-value__remove {
+  color: white;
   cursor: pointer;
 }
 
-.skills-checkboxes input[type="checkbox"]:checked {
-  background-color: #64c1f7;
-  border-color: #64c1f7;
+.custom-select__multi-value__remove:hover {
+  background-color: #388e3c;
+  color: white;
+}
+.urgency-level-select select {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #dda5e776;
+  border-radius: 5px;
+  background-color: #FFF3E0;
+  font-size: 16px;
 }
 
-.skills-checkboxes input[type="checkbox"]:hover {
-  background-color: #9ac3ec;
+.urgency-level-select select:focus {
+  border-color: #6406759a;
+  outline: none;
 }
-.skills-checkboxes label {
-  font-size: 14px;
+
+.urgency-level-select option {
+  background-color: white;
+  color: black;
 }
+
 
