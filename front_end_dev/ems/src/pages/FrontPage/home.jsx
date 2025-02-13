@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import '../index';
-//import {Route, Routes} from 'react-router-dom';
-import img1 from '../Assert/volunteer-1326758-1080x675.png';
-import img2 from '../Assert/400dpiLogo.png';
-//import FosterKitten from './pages/FosterKitten'; 
-//import SaveTheWorld from './pages/SaveTheWorld';
+import { Link } from 'react-router-dom';
+import img1 from '../../assets/volunteer.png';
+import img2 from '../../assets/logo.png';
+import './home.css';
+import Contact from './Contact/Contact';
 
 function Home() {
+  
   const [events] = useState([
     
     { id: 1, title:'Foster for Kitten or Cat', date: '03-12-2025'},
@@ -17,7 +17,6 @@ function Home() {
 
   return (
      <div className="Home">
-      {/* Header Section */}
       <header className="header">
         <div className="home">
           <p>
@@ -26,29 +25,33 @@ function Home() {
           </p>
         </div>
         <div className="left-header">
-          <div className="contact-info">
-            <button>Contact Us</button>
-          </div>
           <div className="login">
-            <button>Login</button>
+            <Link to="/login">
+              <button>Login</button>
+            </Link>
           </div>
           <div className="signin">
+            <Link to="/signup">
             <button>Sign Up</button>
+            </Link>
           </div>
           <div className="donation-bar">
-            <button>Donate Now!</button>
+            <Link to="/donate">
+              <button>Donate Now!</button>
+            </Link>
+          </div>
+          <div className="contact-info">
+          <button onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })}>Contact Us</button>
           </div>
         </div>
       </header>
 
 
       <main className="main-content">
-        {/* Pictures Section (Top Middle) */}
         <div className="image-gallery">
           <img src={img1} alt="" />
         </div>
 
-        {/* Events Section */}
         <section className="events">
           <h2>Upcoming Events</h2>
           <ul>
@@ -61,6 +64,7 @@ function Home() {
           </ul>
         </section>
       </main>
+      <Contact />
      </div>
   );
 }
