@@ -1,8 +1,14 @@
-import userProfile from "./userProfile"
+
+import ProfilePage from "./ProfilePage";
+import VolunteerHistory from "./VolunteerHistory"
+import './UserProfile.css';
 
 function App() {
   return(
-    <userProfile></userProfile>
+    <div className="App">
+            <ProfilePage />
+        </div>
+    
   );
 }
 
