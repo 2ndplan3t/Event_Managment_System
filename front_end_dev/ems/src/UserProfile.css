@@ -1,132 +1,125 @@
+/*main */
+.user-profile-body {
+  font-family: Arial, sans-serif;
+  background-color: #f0e7c6;  
+  margin: 0;
+  display: flex;
+  justify-content: center; 
+  align-items: center;  
+  color: #444034;
+}
 
-/* main styling */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f0e7c6;  
-    margin: 0;
-    display: flex;
-    justify-content: center; 
-    align-items: center; 
-    height: 120vh; 
-    color: #444034;
-  }
-  /* green box styling */
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 17px; 
-    width: 100%;
-    max-width: 700px; 
-    padding: 20px;
-    background-color: #8c9657;
-    border: 2px solid #8c9657; 
-    border-radius: 15px; 
-    
-  }
-  
-  .custom-dropdown {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-  }
-  
-  .dropdown-button {
-    width: 100%;
-    padding: 8px;
-    text-align: center;
-    border: 1px solid #444034;
-    cursor: pointer;
-    background-color: #f0e7c6; 
-    color: #444034; 
-  }
-  
-  .dropdown-content {
-    display: block;
-    position: absolute;
-    background-color: #f0e7c6;
-    min-width: 100%;
-    border: 1px solid #f0e7c6;
-    z-index: 1;
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 2px;
-    color: #444034;
-  }
-  
-  .checkbox-label {
-    display: block;
-    padding: 5px;
-    cursor: pointer;
-    color: #444034; 
-  }
-  
-  
-  
-  /* Adding spacing to input fields */
-  input, textarea, select {
-    background-color: #444034;
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #444034;
-    border-radius: 4px;
-  }
-  
-  
-  
-  /* Style the submit button */
-  button {
-    padding: 10px 15px;
-    background-color: #f0e7c6; 
-    color: #444034; 
-    border: 1px solid #8c9657; 
-    border-radius: 4px;
-    cursor: pointer;
-    text-align: center; 
-    transition: background-color 0.3s ease, color 0.3s ease; 
-  }
-  
-  /* Button hover effect */
-  button:hover {
-    background-color: #b9c57f; 
-    color: #f0e7c6; 
-    border-color: #8c9657; 
-  }
-  
-  
-  /* profile information display section */
-  .profile-info {
-    background-color: #8c9657;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 20px;
-    border: 5px solid #444034; 
-    border-radius: 10px; 
-    
-  }
-  
-  .profile-info p {
-    font-size: 16px;
-    color: #444034;
-  }
-  
-  .profile-info p strong {
-    color: #444034;
-  }
-  
-  /* Volunteer History Table Styling */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    
-  }
-  
-  th, td {
-    background-color: #8c9657;
-    padding: 10px;
-    border: 5px solid #444034;
-    text-align: left;
-  }
-  
-  
+/*form*/
+.user-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 17px; 
+  width: 100%;
+  max-width: 700px; 
+  padding: 20px;
+  background-color: #8c9657;
+  border: 2px solid #8c9657; 
+  border-radius: 15px; 
+}
+
+/*dropdown  */
+.user-profile-dropdown {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.user-profile-dropdown-button {
+  width: 100%;
+  padding: 8px;
+  text-align: center;
+  border: 1px solid #444034;
+  cursor: pointer;
+  background-color: #f0e7c6; 
+  color: #444034; 
+}
+
+.user-profile-dropdown-content {
+  display: block;
+  position: absolute;
+  background-color: #f0e7c6;
+  min-width: 100%;
+  border: 1px solid #f0e7c6;
+  z-index: 1;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 2px;
+  color: #444034;
+}
+
+.user-profile-checkbox-label {
+  display: block;
+  padding: 5px;
+  cursor: pointer;
+  color: #444034; 
+}
+
+/*input fields */
+.user-profile-input, 
+.user-profile-textarea, 
+.user-profile-select {
+  background-color: #444034;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #444034;
+  border-radius: 4px;
+}
+
+/*button styling */
+.user-profile-button {
+  padding: 10px 15px;
+  background-color: #f0e7c6; 
+  color: #444034; 
+  border: 1px solid #8c9657; 
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center; 
+  transition: background-color 0.3s ease, color 0.3s ease; 
+}
+
+/*button hover effect */
+.user-profile-button:hover {
+  background-color: #b9c57f; 
+  color: #f0e7c6; 
+  border-color: #8c9657; 
+}
+
+/*profile information section */
+.user-profile-info {
+  background-color: #8c9657;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px;
+  border: 5px solid #444034; 
+  border-radius: 10px; 
+}
+
+.user-profile-info p {
+  font-size: 16px;
+  color: #444034;
+}
+
+.user-profile-info p strong {
+  color: #444034;
+}
+
+/*volunteer history table */
+.user-profile-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.user-profile-th, 
+.user-profile-td {
+  background-color: #8c9657;
+  padding: 10px;
+  border: 5px solid #444034;
+  text-align: left;
+}
