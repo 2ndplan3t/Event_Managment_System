@@ -7,6 +7,7 @@ import Donate from './pages/FrontPage/Donate/Donate';
 import EventForm from './pages/Profile/Admin/AdminEventForm';
 import ProfilePage from './pages/Profile/User/ProfilePage';
 import VolunteerHistory from './pages/Profile/User/VolunteerHistory';
+import Notifications from './pages/Notifications/Notifications';
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/admin" element={<EventForm />} />
         <Route path="/user" element={<ProfilePage />} />
         <Route path="/history" element={<VolunteerHistory />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Routes>
     </Router>
   );

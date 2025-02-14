@@ -1,16 +1,12 @@
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+
   
   body {
     font-family: 'Arial', sans-serif;
     color: #333;
   }
   
-  .App {
+  .DonateApp {
     max-width: 800px;
     margin: 20px auto;
     padding: 20px;
@@ -96,10 +92,6 @@
     margin-top: 20px;
     transition: background-color 0.3s;
     align-self: center;
-  }
-  
-  button:hover {
-    background-color: #45a049;
   }
   
   .thank-you-message {

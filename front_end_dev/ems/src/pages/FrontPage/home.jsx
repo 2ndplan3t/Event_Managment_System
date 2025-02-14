@@ -23,8 +23,9 @@ function Home() {
             <img src={img2} alt="" />
             SHARE-CARE
           </p>
-        </div>
+        </div><div className="buttons-container">
         <div className="left-header">
+        
           <div className="login">
             <Link to="/login">
               <button>Login</button>
@@ -42,6 +43,7 @@ function Home() {
           </div>
           <div className="contact-info">
           <button onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })}>Contact Us</button>
+          </div>
           </div>
         </div>
       </header>

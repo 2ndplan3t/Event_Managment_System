@@ -2,19 +2,26 @@
   font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #ebdada;
-  color: #333;
+  color: #444034;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-
-.app-container h1 {
-  font-size: 32px;
-  color: #1b1b1b;
-  margin-top: 40px;
+.event-management-container {
+  padding: 30px;
+  background-color: #ebf8ece0;
+  margin: 20px 0;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1), 0 6px 30px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 600px;
+  transition: all 0.3s ease-in-out;
+  font-style: italic;
 }
+
+
+
 
 
 .profile-container {
@@ -37,7 +44,7 @@
   margin-top: 0;
   font-size: 40px;
   font-style: oblique;
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  
   color: #9ac3ec;
 }
 
@@ -48,7 +55,7 @@
 
 .profile-info p {
   font-size: 20px;
-  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  
   margin: 5px 0;
   line-height: 1.6;
   color: #d43d3d;
@@ -56,11 +63,11 @@
 
 .profile-info .profile-id {
   font-weight: bold;
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+
 }
 
 .profile-info .profile-email {
-  color: #080808;
+  color: #444034
 }
 
 
@@ -71,7 +78,7 @@
 
 .event-management-container {
   padding: 20px;
-  background-color: #acf9be;
+  background-color: #8c9657; ;
   margin: 20px 0;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.2);
@@ -79,7 +86,7 @@
   max-width: 600px;
   transition: all 0.3s ease-in-out;
   font-style: italic;
-  font-family: Georgia, 'Times New Roman', Times, serif;
+
 }
 
 .event-management-container:hover {
@@ -88,7 +95,7 @@
 
 .event-management-container h3 {
   font-size: 24px;
-  font-family: Georgia, 'Times New Roman', Times, serif;
+
   font-style:italic;
   color: #2c3e50;
   margin-bottom: 15px;
@@ -99,11 +106,13 @@
   width: 90%;
   padding: 12px;
   margin: 10px 0;
+  background-color: #444034;;
+  color:white;
   border: 1px solid #6406759a;
   border-radius: 5px;
   font-size: 16px;
   transition: all 0.3s ease;
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+
 }
 input[type="date"] {
   background-color: #fff;
@@ -125,7 +134,7 @@ input[type="date"]:focus {
 }
 
 .event-management-container button {
-  background-color: #c846df83;;
+  background-color: #444034;
   color: white;
   border: none;
   padding: 12px 20px;
@@ -133,7 +142,7 @@ input[type="date"]:focus {
   margin-top: 10px;
   cursor: pointer;
   font-size: 16px;
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
@@ -198,7 +207,9 @@ input[type="date"]:focus {
   .event-management-container input,
   .event-management-container textarea {
     padding: 10px;
+    
   }
+
 
   .profile-avatar {
     width: 80px;
@@ -277,7 +288,6 @@ input[type="date"]:focus {
   margin-top: 20px; 
   margin-bottom: 20px; 
   text-align:left;
-  font-family:Georgia, 'Times New Roman', Times, serif;
   font-size: 20px;
 }
 .react-calendar {
@@ -287,26 +297,26 @@ input[type="date"]:focus {
   padding: 10px;
 }
 
-.react-calendar__tile {
-  transition: background-color 0.3s ease;
-}
 
-
-.react-calendar__tile:hover {
-  background-color: #b1bdb1;
-  color: rgba(15, 15, 15, 0.868);
-  cursor: pointer;
-}
-
-
-.react-calendar__tile--hasActive {
-  background-color: #df6d43;
+.event-management-container .react-calendar__navigation__prev-button,
+.event-management-container .react-calendar__navigation__next-button,
+.event-management-container .react-calendar__navigation__prev2-button,
+.event-management-container .react-calendar__navigation__next2-button {
+  font-size: 20px;
   color: white;
+  background-color: #444034;
 }
 
-/* Custom styling for the react-select component */
-.custom-select__control {
-  border: 2px solid #4caf50;
+.event-management-container .react-calendar__navigation__label {
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+  background: #444034;
+}
+
+.event-management-container .custom-select__control {
+
+  background-color:#444034;
   border-radius: 5px;
   padding: 5px;
   box-shadow: none;
@@ -333,7 +343,7 @@ input[type="date"]:focus {
 }
 
 .custom-select__option--is-focused {
-  background-color: #c8e6c9;
+  background-color: #444034;
 }
 
 .custom-select__multi-value {

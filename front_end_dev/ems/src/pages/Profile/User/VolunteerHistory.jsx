@@ -1,9 +1,8 @@
 import Navbar from "./Navigation"; 
-import './VolunteerHistory.css';
+//import './VolunteerHistory.css';
 import React, { useState } from "react";
 
-
-function volunteerhistory() {
+function VolunteerHistory() {
     // Hardcoded volunteer history data, will be replaced with real data once backend and database are added
     const dummyVolunteerHistory = [
         { eventName: "Beach Cleanup", eventDesc: "To clean up trash off of the local beach", location: "6285 Seawall Blvd, Galveston, TX 77551", participationDate: "2024-06-15", status: "Completed" },
@@ -12,31 +11,30 @@ function volunteerhistory() {
     ];
 
     return (
-        <div className="App">
+        <div className="volunteer-history-container">
             <Navbar />
 
             <h1>Volunteer History</h1>
 
             <div>
-
-                <table>
+                <table className="volunteer-history-table">
                     <thead>
                         <tr>
-                            <th>Event Name</th>
-                            <th>Event Description</th>
-                            <th>Location</th>
-                            <th>Participation Date</th>
-                            <th>Status</th>
+                            <th className="volunteer-history-th">Event Name</th>
+                            <th className="volunteer-history-th">Event Description</th>
+                            <th className="volunteer-history-th">Location</th>
+                            <th className="volunteer-history-th">Participation Date</th>
+                            <th className="volunteer-history-th">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {dummyVolunteerHistory.map((history, index) => (
                             <tr key={index}>
-                                <td>{history.eventName}</td>
-                                <td>{history.eventDesc}</td>
-                                <td>{history.location}</td>
-                                <td>{history.participationDate}</td>
-                                <td>{history.status}</td>
+                                <td className="volunteer-history-td">{history.eventName}</td>
+                                <td className="volunteer-history-td">{history.eventDesc}</td>
+                                <td className="volunteer-history-td">{history.location}</td>
+                                <td className="volunteer-history-td">{history.participationDate}</td>
+                                <td className="volunteer-history-td">{history.status}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -46,4 +44,4 @@ function volunteerhistory() {
     );
 }
 
-export default volunteerhistory;
+export default VolunteerHistory;

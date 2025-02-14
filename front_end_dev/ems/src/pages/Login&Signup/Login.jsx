@@ -16,7 +16,7 @@ function Login() {
 //temp admin and volunteer accounts
 //logging in will redirect to the admin/volunteer user profile pages
   const adminCredentials = {
-    email: 'johndoe@gmail.com',
+    email: 'admin@example.com',
     password: 'admin_123',
   };
 
@@ -116,11 +116,11 @@ function Login() {
       {isModalOpen && (
         <div className="modal-overlay" onClick={handleOverlayClick}>
           <div className="log-in-container">
-            <div className="form-container">
-              <button className="close-btn" onClick={closeModal}>×</button>
+            <div className="login-form-container">
+              <button className="login-close-btn" onClick={closeModal}>×</button>
 
               {/* toggle buttons for Login/SignUp */}
-              <div className="form-toggle">
+              <div className="login-form-toggle">
                 <button
                   className={isSignUp ? '' : 'active'}
                   onClick={() => handleTabSwitch(false)}
@@ -135,7 +135,7 @@ function Login() {
                 </button>
               </div>
 
-              <form className="form" onSubmit={handleSubmit}>
+              <form className="login-form" onSubmit={handleSubmit}>
                 <h2>{isSignUp ? 'Sign Up' : 'Login'}</h2>
 
                 <input
@@ -172,7 +172,7 @@ function Login() {
                 <p>
                   {isSignUp ? 'Already have an account?' : "Don't have an account?"}
                   <span
-                    style={{ color: '#5ad0cc', cursor: 'pointer' }}
+                    style={{ color: '#1fb9b4', cursor: 'pointer' }}
                     onClick={() => setIsSignUp(!isSignUp)}
                   >
                     {isSignUp ? ' Log in' : ' Sign Up'}

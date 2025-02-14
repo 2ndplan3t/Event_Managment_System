@@ -6,9 +6,9 @@ function Navbar() {
     return (
         <nav className="navbar">
             <ul>
-                <li><a href="#home">Home</a></li>
+                <li><Link to="/">Home</Link></li>
                 <li><Link to="/user">Profile</Link></li>
-                <li><a href="#notifications">Notifications</a></li>
+                <li><Link to="/notifications">Notifications</Link></li>
                 <li><Link to="/history">History</Link></li>
             </ul>
         </nav>

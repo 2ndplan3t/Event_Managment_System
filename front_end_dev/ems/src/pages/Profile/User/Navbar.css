@@ -1,6 +1,6 @@
 
 .navbar {
-    background-color: #3b35a3df; 
+    background-color: #8c9657; 
     color: rgb(68, 64, 52); 
     padding: 10px 20px; 
     display: flex; 
@@ -29,11 +29,11 @@
   
   .navbar a {
     text-decoration: none; 
-    color: white; 
+    color: #444034; 
     font-weight: bold; 
     transition: color 0.3s; 
   }
   
   .navbar a:hover {
-    color: #f0e7c6; 
+    color: #444034;; 
   }  

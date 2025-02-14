@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import EventManagement from './EventManagement';
-import './event.css';
+//import './event.css';
 
 const AdminProfile = () => {
   const admin = {
@@ -23,9 +23,11 @@ const AdminProfile = () => {
 
       
       <div className="button-container">
-        <Link to="./components/profile">
           <button className="btn">View Profile</button>
+        <Link to="/">
+          <button className="btn">Home</button>
         </Link>
+        
       </div>
     </div>
     

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import './donation.css';
+//import './donation.css';
 
 const Donate = () => {
   const [donationType, setDonationType] = useState('');
@@ -20,7 +20,7 @@ const Donate = () => {
 
 
   return (
-    <div className="App">
+    <div className="DonateApp">
       <header>
         <h1>Donation Drive at Our Local Address</h1>
         <p>

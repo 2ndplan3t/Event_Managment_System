@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Calendar from 'react-calendar';
 import Select from 'react-select';
 import 'react-calendar/dist/Calendar.css';
-import './event.css';
+//import './event.css';
 
 const skillOptions = [
   { value: 'First - Aid', label: 'First - Aid' },
