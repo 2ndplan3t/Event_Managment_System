@@ -6,6 +6,7 @@ function Notifications() {
   const [count, setCount] = useState(0)
 
   return (
+    <div className="no-global-reset">
     <div className="root">
       <header class="notif_page">
         <div class="nav_buttons"> 
@@ -24,6 +25,7 @@ function Notifications() {
       <footer>
         <p><a href= "https://github.com/2ndplan3t/Event_Managment_System/tree/main"><img src="src/assets/GitHub-logo.png" alt="Github Link" width="80px" height="40px"></img></a> &copy; Copyright Group 9</p>
       </footer>
+    </div>
     </div>
   )
 }

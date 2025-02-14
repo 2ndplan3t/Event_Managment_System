@@ -61,6 +61,7 @@ function Login() {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    setError('');
   };
 
 
