@@ -4,11 +4,33 @@
   margin: 20px;
   padding: 100px;
   text-align: center;
-  background-color: #80a9b3;
-  color: black;
+  background-color: #f0e7c6;
+  color: #444034;
   font-family: "Trebuchet MS", "Verdana", sans-serif;
 }
 
+.notif_page{
+
+}
+
+.nav_buttons{
+  background-color: #8c9657;
+  border-radius: 10px;
+}
+
+.nav_buttons button {
+  background-color: transparent; /* Makes the background transparent */
+  color: white; /* Sets the text color to white */
+  padding: 10px 20px; /* Adds padding for better size */
+  margin: 5px; /* Adds space between the buttons */
+  cursor: pointer; /* Changes the cursor to a pointer when hovering over the button */
+  font-size: 16px; /* Sets a font size */
+}
+
+.nav_buttons button:hover {
+  background-color: #b9c57f; /* Adds a subtle background color on hover */
+  border-color: #444034; /* Keeps the border white */
+}
 .notif_area{
   display: grid;
   grid-template-columns: 1fr;
@@ -22,7 +44,7 @@
 }
 
 .notification{
-  border: 2px dashed darkslateblue;
+  border: 2px dashed #8c9657;
   width: auto;
   margin: auto 20px auto 20px;
   padding: 20px;

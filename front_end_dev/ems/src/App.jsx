@@ -6,14 +6,14 @@ function App() {
 
   return (
     <>
-      <header>
+      <header class="notif_page">
+        <div class="nav_buttons"> 
+          <button type="button">Home</button>
+          <button type="button">Profile</button>
+          <button type="button">Manage Event</button>
+        </div>
         <h1>Notifications</h1>
       </header>
-      <div class="nav_buttons"> 
-        <button type="button">Home</button>
-        <button type="button">Profile</button>
-        <button type="button">Manage Event</button>
-      </div>
       <div class="notif_area">
         <p class="notification">This is a test notification</p>
         <p class="notification">This is a test notification</p>
