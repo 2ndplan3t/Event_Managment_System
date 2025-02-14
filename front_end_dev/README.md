@@ -7,6 +7,7 @@ Mysha- manager profile, events and front page
 
 Venus- volunteer history and user profile management
 
-Note! Use npm run dev to start the development server
-
-ems is the name of the website directory, it stands for event management system 
+**Note!**
+Install dependencies with npm install if necessary<br>
+start the server with npm run dev<br>
+ems is the name of the website directory, it stands for event management system
