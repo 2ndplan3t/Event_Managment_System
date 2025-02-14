@@ -11,7 +11,7 @@ function ProfilePage() {
     };
 
     return (
-        <div className="App">
+        <div className="profilepage">
             <Navbar />
 
             <h1>Profile Management Form</h1>
@@ -20,7 +20,7 @@ function ProfilePage() {
             ) : (
                 <div>
                     <h2>Profile Information</h2>
-                    <div className="profile-info">
+                    <div className="profile-info-section">
                         <p><strong>Full Name:</strong> {profileData.fullName}</p>
                         <p><strong>Address 1:</strong> {profileData.address1}</p>
                         <p><strong>Address 2:</strong> {profileData.address2}</p>
@@ -31,10 +31,8 @@ function ProfilePage() {
                         <p><strong>Preferences:</strong> {profileData.preferences}</p>
                         <p><strong>Availability:</strong> {profileData.availability}</p>
                     </div>
-
                 </div>
             )}
-            
         </div>
     );
 }

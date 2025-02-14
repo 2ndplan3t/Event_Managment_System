@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import './UserProfile.css';
 
-function userprofile({ onSubmit }) {
+function UserProfile({ onSubmit }) {
     const [formData, setFormData] = useState({
         fullName: "",
         address1: "",
@@ -47,7 +47,7 @@ function userprofile({ onSubmit }) {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="userprofile-form">
             <div>
                 <label>Full Name:</label>
                 <input
@@ -57,6 +57,7 @@ function userprofile({ onSubmit }) {
                     onChange={handleChange}
                     maxLength={50}
                     required
+                    className="userprofile-input"
                 />
             </div>
 
@@ -69,6 +70,7 @@ function userprofile({ onSubmit }) {
                     onChange={handleChange}
                     maxLength={100}
                     required
+                    className="userprofile-input"
                 />
             </div>
 
@@ -80,6 +82,7 @@ function userprofile({ onSubmit }) {
                     value={formData.address2}
                     onChange={handleChange}
                     maxLength={100}
+                    className="userprofile-input"
                 />
             </div>
 
@@ -92,6 +95,7 @@ function userprofile({ onSubmit }) {
                     onChange={handleChange}
                     maxLength={100}
                     required
+                    className="userprofile-input"
                 />
             </div>
 
@@ -102,6 +106,7 @@ function userprofile({ onSubmit }) {
                     value={formData.state}
                     onChange={handleChange}
                     required
+                    className="userprofile-select"
                 >
                     <option value="">Select State</option>
                     {states.map((stateCode) => (
@@ -126,12 +131,13 @@ function userprofile({ onSubmit }) {
                     }}
                     maxLength={9}
                     required
+                    className="userprofile-input"
                 />
             </div>
 
             <div>
                 <label>Skills:</label>
-                <div className="custom-dropdown">
+                <div className="custom-dropdown-container">
                         <button type="button" className="dropdown-button" onClick={toggleDropdown}>
                             {formData.skills.length === 0
                                 ? "Select Skills"
@@ -164,7 +170,8 @@ function userprofile({ onSubmit }) {
                     value={formData.preferences}
                     onChange={handleChange}
                     rows="4"
-                        cols="50"
+                    cols="50"
+                    className="userprofile-textarea"
                 />
             </div>
 
@@ -176,12 +183,13 @@ function userprofile({ onSubmit }) {
                     value={formData.availability}
                     onChange={handleChange}
                     required
+                    className="userprofile-input"
                 />
             </div>
 
-            <button type="submit">Submit</button>
+            <button type="submit" className="submit-button">Submit</button>
         </form>
     );
 }
 
-export default userprofile;
+export default UserProfile;
