@@ -25,14 +25,14 @@ volunteer: user: volunteer@example.com password: volunteer_123
 
 ![alt text](https://github.com/2ndplan3t/Event_Managment_System/blob/main/screenshots/volunteerhistory.png?raw=true)
 
-# Notifications 
+## Notifications 
 ![alt text](https://github.com/2ndplan3t/Event_Managment_System/blob/main/screenshots/notifications.png?raw=true)
 
-# Login & Sign up
+## Login & Sign up
 ![alt text](https://github.com/2ndplan3t/Event_Managment_System/blob/main/screenshots/login.png?raw=true)
 ![alt text](https://github.com/2ndplan3t/Event_Managment_System/blob/main/screenshots/signup.png?raw=true)
 
-# (ADMIN ONLY) Event Management:
+## (ADMIN ONLY) Event Management:
 ![alt text](https://github.com/2ndplan3t/Event_Managment_System/blob/main/screenshots/admin%20event%20management1.png?raw=true)
 ![alt text](https://github.com/2ndplan3t/Event_Managment_System/blob/main/screenshots/admin%20event%20management2.png?raw=true)
 
