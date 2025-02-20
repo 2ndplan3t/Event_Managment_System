@@ -11,10 +11,11 @@ function UserProfile({ onSubmit }) {
         zipCode: "",
         skills: [],
         preferences: "",
-        availability: "",
+        availability: [],
     });
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [newAvailability, setNewAvailability] = useState("");
 
     const states = [
         "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
@@ -46,8 +47,25 @@ function UserProfile({ onSubmit }) {
         setDropdownOpen(prevState => !prevState);
     };
 
+    const handleAddAvailability = () => {
+        if (newAvailability && !formData.availability.includes(newAvailability)) {
+            setFormData(prevState => ({
+                ...prevState,
+                availability: [...prevState.availability, newAvailability]
+            }));
+            setNewAvailability("");
+        }
+    };
+
+    const handleRemoveAvailability = (date) => {
+        setFormData(prevState => ({
+            ...prevState,
+            availability: prevState.availability.filter(d => d !== date)
+        }));
+    };
+
     return (
-        <div className="profile-info-section"> {/* Apply the class here */}
+        <div className="profile-info-section">
             <form onSubmit={handleSubmit} className="userprofile-form">
                 <div>
                     <label>Full Name:</label>
@@ -178,14 +196,31 @@ function UserProfile({ onSubmit }) {
 
                 <div>
                     <label>Availability:</label>
-                    <input
-                        type="date"
-                        name="availability"
-                        value={formData.availability}
-                        onChange={handleChange}
-                        required
-                        className="userprofile-input"
-                    />
+                    <div>
+                        <input
+                            type="date"
+                            value={newAvailability}
+                            onChange={(e) => setNewAvailability(e.target.value)}
+                            className="userprofile-input"
+                        />
+                        <button type="button" onClick={handleAddAvailability} className="add-button">
+                            Add Date
+                        </button>
+                    </div>
+                    <ul className="availability-list">
+                        {formData.availability.map((date, index) => (
+                            <li key={index} className="availability-item">
+                                {date}
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveAvailability(date)}
+                                    className="remove-button"
+                                >
+                                    X
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
                 <button type="submit" className="submit-button">Submit</button>
