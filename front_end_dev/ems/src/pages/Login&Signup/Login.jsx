@@ -91,11 +91,16 @@ function Login() {
   
         const data = await response.json();
         console.log("Login successful:", data);
+
+        localStorage.setItem("user", JSON.stringify(data));
   
         if (data.role === "admin") {
+          localStorage.setItem("adminId", data.id);
           navigate("/admin");
         } else if (data.role === "volunteer") {
           navigate("/user");
+        }else {
+          navigate("/"); //undefined user role
         }
       } catch (error) {
         setError("Invalid email or password");

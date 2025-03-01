@@ -11,8 +11,6 @@ import VolunteerHistory from './pages/Profile/User/VolunteerHistory';
 import Notifications from './pages/Notifications/Notifications';
 import { useEffect } from 'react';
 
-
-
 function App() {
     // test backend connection. use f12 in the browser to check if it works
     useEffect(() => {
