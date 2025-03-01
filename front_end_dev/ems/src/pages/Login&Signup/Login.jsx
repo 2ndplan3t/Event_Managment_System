@@ -2,7 +2,7 @@ import React, { useState, useEffect  } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Login.css'; 
 import Home from '../FrontPage/home';
-import axios from "axios";
+
 
 function Login() {
 
@@ -15,18 +15,6 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate(); 
 
-/*temp admin and volunteer accounts
-/logging in will redirect to the admin/volunteer user profile pages
-  const adminCredentials = {
-    email: 'admin@example.com',
-    password: 'admin_123',
-  };
-
-  const volunteerCredentials = {
-    email: 'volunteer@example.com',
-    password: 'volunteer_123',
-  };
-  */
 
 //closing login/signup will redirect to the homepage
   const closeModal = () => {
@@ -69,58 +57,52 @@ function Login() {
   };
 
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-
-  if (isSignUp) {
-    const passwordError = passwordValidation(password);
-    if (passwordError) {
-      setError(passwordError);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-    console.log("Sign-up logic needs backend implementation.");
-  } else {
-    if (!email || !password) {
-      setError("Please fill in both fields");
-      return;
-    }
-
-    try {
-      const response = await axios.post("http://localhost:5000/api/login", {
-        email,
-        password,
-      });
-
-      console.log("Login successful:", response.data);
-      
-      if (response.data.role === "admin") {
-        navigate("/admin"); 
-      } else if (response.data.role === "volunteer") {
-        navigate("/user");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+  
+    if (isSignUp) {
+      const passwordError = passwordValidation(password);
+      if (passwordError) {
+        setError(passwordError);
+        return;
       }
-      
-    } catch (error) {
-      setError("Invalid email or password");
-      console.error("Login error:", error.response?.data);
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+      console.log("Sign-up logic needs backend implementation.");
+    } else {
+      if (!email || !password) {
+        setError("Please fill in both fields");
+        return;
+      }
+  
+      try {
+        const response = await fetch("http://localhost:5000/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+  
+        if (!response.ok) {
+          throw new Error("Invalid email or password");
+        }
+  
+        const data = await response.json();
+        console.log("Login successful:", data);
+  
+        if (data.role === "admin") {
+          navigate("/admin");
+        } else if (data.role === "volunteer") {
+          navigate("/user");
+        }
+      } catch (error) {
+        setError("Invalid email or password");
+        console.error("Login error:", error);
+      }
     }
-  }
-};
-  useEffect(() => {
-    setIsSignUp(location.pathname === '/signup');
-    
-    if (isModalOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [location, isModalOpen]);
+  };
 
   return (
     <>
