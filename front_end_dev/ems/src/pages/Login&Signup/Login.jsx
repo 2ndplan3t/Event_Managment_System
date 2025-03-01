@@ -2,6 +2,8 @@ import React, { useState, useEffect  } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Login.css'; 
 import Home from '../FrontPage/home';
+import axios from "axios";
+
 function Login() {
 
   const location = useLocation();
@@ -13,8 +15,8 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate(); 
 
-//temp admin and volunteer accounts
-//logging in will redirect to the admin/volunteer user profile pages
+/*temp admin and volunteer accounts
+/logging in will redirect to the admin/volunteer user profile pages
   const adminCredentials = {
     email: 'admin@example.com',
     password: 'admin_123',
@@ -24,6 +26,8 @@ function Login() {
     email: 'volunteer@example.com',
     password: 'volunteer_123',
   };
+  */
+
 //closing login/signup will redirect to the homepage
   const closeModal = () => {
     setIsModalOpen(false); 
@@ -65,40 +69,47 @@ function Login() {
   };
 
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');  
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    if (isSignUp) {
-      const passwordError = passwordValidation(password);
-      if (passwordError) {
-        setError(passwordError);
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError('Passwords do not match');
-      } else {
-        
-        console.log('Signing up with', email, password);
-      }
-    } else {
-      // Check if it's a temp admin/user login
-      if (email === adminCredentials.email && password === adminCredentials.password) {
-        //redirect to admin user profile page
-        navigate('/admin'); 
-      }if (email === volunteerCredentials.email && password === volunteerCredentials.password){
-        //redirect to volunteer user profile page
-        navigate('/user');
-      
-      } else if (!email || !password) {
-        setError('Please fill in both fields');
-      } else {
-        // Validate temp login...
-        console.log('Logging in with', email, password);
-      }
+  if (isSignUp) {
+    const passwordError = passwordValidation(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
     }
-  };
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    console.log("Sign-up logic needs backend implementation.");
+  } else {
+    if (!email || !password) {
+      setError("Please fill in both fields");
+      return;
+    }
 
+    try {
+      const response = await axios.post("http://localhost:5000/api/login", {
+        email,
+        password,
+      });
+
+      console.log("Login successful:", response.data);
+      
+      if (response.data.role === "admin") {
+        navigate("/admin"); 
+      } else if (response.data.role === "volunteer") {
+        navigate("/user");
+      }
+      
+    } catch (error) {
+      setError("Invalid email or password");
+      console.error("Login error:", error.response?.data);
+    }
+  }
+};
   useEffect(() => {
     setIsSignUp(location.pathname === '/signup');
     
