@@ -2,6 +2,8 @@ import React, { useState, useEffect  } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Login.css'; 
 import Home from '../FrontPage/home';
+
+
 function Login() {
 
   const location = useLocation();
@@ -13,17 +15,7 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate(); 
 
-//temp admin and volunteer accounts
-//logging in will redirect to the admin/volunteer user profile pages
-  const adminCredentials = {
-    email: 'admin@example.com',
-    password: 'admin_123',
-  };
 
-  const volunteerCredentials = {
-    email: 'volunteer@example.com',
-    password: 'volunteer_123',
-  };
 //closing login/signup will redirect to the homepage
   const closeModal = () => {
     setIsModalOpen(false); 
@@ -65,10 +57,10 @@ function Login() {
   };
 
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');  
-
+    setError("");
+  
     if (isSignUp) {
       const passwordError = passwordValidation(password);
       if (passwordError) {
@@ -76,40 +68,46 @@ function Login() {
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match');
-      } else {
-        
-        console.log('Signing up with', email, password);
+        setError("Passwords do not match");
+        return;
       }
+      console.log("Sign-up logic needs backend implementation.");
     } else {
-      // Check if it's a temp admin/user login
-      if (email === adminCredentials.email && password === adminCredentials.password) {
-        //redirect to admin user profile page
-        navigate('/admin'); 
-      }if (email === volunteerCredentials.email && password === volunteerCredentials.password){
-        //redirect to volunteer user profile page
-        navigate('/user');
-      
-      } else if (!email || !password) {
-        setError('Please fill in both fields');
-      } else {
-        // Validate temp login...
-        console.log('Logging in with', email, password);
+      if (!email || !password) {
+        setError("Please fill in both fields");
+        return;
+      }
+  
+      try {
+        const response = await fetch("http://localhost:5000/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+  
+        if (!response.ok) {
+          throw new Error("Invalid email or password");
+        }
+  
+        const data = await response.json();
+        console.log("Login successful:", data);
+
+        localStorage.setItem("user", JSON.stringify(data));
+  
+        if (data.role === "admin") {
+          localStorage.setItem("adminId", data.id);
+          navigate("/admin");
+        } else if (data.role === "volunteer") {
+          navigate("/user");
+        }else {
+          navigate("/"); //undefined user role
+        }
+      } catch (error) {
+        setError("Invalid email or password");
+        console.error("Login error:", error);
       }
     }
   };
-
-  useEffect(() => {
-    setIsSignUp(location.pathname === '/signup');
-    
-    if (isModalOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [location, isModalOpen]);
 
   return (
     <>
