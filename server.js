@@ -19,40 +19,7 @@ const users = [
       password: "admin_123", 
       role:"admin", 
       fullName:"John Doe" },
-    { id: 3, 
-      email: "charlie@example.com", 
-      password: "volunteer_123", 
-      role:"volunteer", 
-      fullName: "Charlie" ,
-      address1:"",
-      address2:"",
-      city: "",
-      state: "",
-      zip:"",
-      skills: ["First Aid", "Security"],
-      volunteerHistory: [],
-      notifications: [] },
-    { id: 4, 
-      email: "alice@example.com", 
-      password: "volunteer_123", 
-      role:"volunteer", 
-      fullName: "Alice",
-      address1:"",
-      address2:"",
-      city: "",
-      state: "",
-      zip:"",
-      skills: ["First Aid", "Logistics"],
-      volunteerHistory: [ 
-        {event: "event name",
-         eventdesc:"example description",
-         location: "location", 
-         date: "2024-06-15",
-         status: "Completed" }],
-      notifications: []
-    },
        
-
   ];
 
    
@@ -95,7 +62,11 @@ app.get("/api/admin/:id", (req, res) => {
 
 // In-memory arrays for events and volunteers
 let events = [];
-
+let volunteers = [
+  { id: 1, name: 'Alice', skills: ['First - Aid', 'Logistics'] },
+  { id: 2, name: 'Bob', skills: ['Security', 'Social and Cultural'] },
+  { id: 3, name: 'Charlie', skills: ['First - Aid', 'Security'] },
+];
 
 // Utility to match volunteers with event required skills
 const matchVolunteers = (event) => {
