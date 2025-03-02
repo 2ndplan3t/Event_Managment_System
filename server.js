@@ -53,8 +53,9 @@ const users = [
     },
        
   ];
-
-   
+  app.get("/api/users", (req, res) => {
+    res.json(users);
+  });
 
 //to check messages in the console log, press F12 in the browser
 //testing backend connection
