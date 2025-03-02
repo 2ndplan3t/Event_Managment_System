@@ -54,6 +54,10 @@ const users = [
        
 
   ];
+  app.get("/api/users", (req, res) => {
+    res.json(users);
+  });
+   
 
 //to check messages in the console log, press F12 in the browser
 //testing backend connection
@@ -61,7 +65,7 @@ app.get("/api/test", (req, res) => {
     res.json({ message: "Backend is working" });
   });
 
-
+ 
 // Login route
 app.post("/api/login", (req, res) => {
     const { email, password } = req.body;
@@ -89,6 +93,85 @@ app.get("/api/admin/:id", (req, res) => {
       res.status(404).json({ message: "Admin not found" });
   }
 }); 
+
+
+let events = [];
+
+
+// match volunteers with event required skills
+const matchVolunteers = (event) => {
+  const volunteers = users.filter(user => user.role === "volunteer");
+
+  return volunteers.filter((volunteer) =>
+    volunteer.skills.some((skill) => event.requiredSkills.includes(skill))
+  );
+};
+
+// Create a new event
+app.post('/api/events', (req, res) => {
+  const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
+  const newEvent = {
+    id: events.length + 1,
+    name,
+    location,
+    envoy,
+    requiredSkills,
+    urgencyLevel,
+    date,
+    manager,
+    selectedVolunteers: [],
+  };
+  events.push(newEvent);
+  res.status(201).json(newEvent);
+});
+
+// Get all events
+app.get('/api/events', (req, res) => {
+  res.json(events);
+});
+
+
+app.delete('/api/events/:id', (req, res) => {
+  const eventId = parseInt(req.params.id, 10);
+  console.log(`Deleting event with ID: ${eventId}`);
+  events = events.filter((event) => event.id !== eventId);
+  console.log('Updated events:', events);
+  res.status(200).json({ message: 'Event deleted successfully.' });
+});
+
+// Create a new volunteer
+app.post('/api/volunteers', (req, res) => {
+  const { name, skills } = req.body;
+  const newVolunteer = {
+    id: volunteers.length + 1,
+    name,
+    skills,
+  };
+  volunteers.push(newVolunteer);
+  res.status(201).json(newVolunteer);
+});
+
+// Get all volunteers
+app.get('/api/volunteers', (req, res) => {
+  const volunteers = users.filter(user => user.role === 'volunteer');
+  res.json(volunteers);
+});
+
+// Match volunteers to an event
+app.post('/api/events/match-volunteers/:eventId', (req, res) => {
+  const eventId = parseInt(req.params.eventId, 10);
+  const event = events.find((e) => e.id === eventId);
+
+  if (!event) {
+    return res.status(404).json({ message: 'Event not found.' });
+  }
+
+  // Get the matched volunteers
+  const matchedVolunteers = matchVolunteers(event);
+  res.json(matchedVolunteers);
+});
+
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
