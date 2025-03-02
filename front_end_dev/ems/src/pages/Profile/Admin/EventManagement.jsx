@@ -11,11 +11,12 @@ const skillOptions = [
   { value: 'Social and Cultural', label: 'Social and Cultural' }
 ];
 
-const volunteers = [
+/*const volunteers = [
   { id: 1, name: 'Alice', skills: ['First - Aid', 'Logistics'] },
   { id: 2, name: 'Bob', skills: ['Security', 'Social and Cultural'] },
   { id: 3, name: 'Charlie', skills: ['First - Aid', 'Security'] },
 ];
+*/
 
 const EventManagement = () => {
   const [events, setEvents] = useState([]);
@@ -29,6 +30,22 @@ const EventManagement = () => {
     manager: '',
     selectedVolunteers: []
   });
+  
+  // Fetch all events from the backend when component mounts
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  // Fetch all events
+  const fetchEvents = async () => {
+    const response = await fetch('http://localhost:5000/api/events');
+    if (response.ok) {
+      const data = await response.json();
+      setEvents(data);
+    } else {
+      console.error('Failed to fetch events');
+    }
+  };
   
   const handleEventChange = (e) => {
     const { name, value } = e.target;
@@ -47,30 +64,70 @@ const EventManagement = () => {
     setEventDetails({ ...eventDetails, selectedVolunteers: selectedOptions || [] });
   };
 
-  const handleCreateEvent = () => {
-    const newEvent = { ...eventDetails, id: events.length + 1 };
-    setEvents([...events, newEvent]);
-    setEventDetails({
-      name: '',
-      location: '',
-      envoy: '',
-      requiredSkills: [],
-      urgencyLevel: '',
-      date: new Date(),
-      manager: '',
-      selectedVolunteers: []
+  // Create event
+  const handleCreateEvent = async () => {
+    const newEvent = { ...eventDetails };
+    
+    // Send POST request to create the event
+    const response = await fetch('http://localhost:5000/api/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newEvent),
     });
+
+    if (response.ok) {
+      const createdEvent = await response.json();
+      setEvents([...events, createdEvent]);
+
+      // Reset event form
+      setEventDetails({
+        name: '',
+        location: '',
+        envoy: '',
+        requiredSkills: [],
+        urgencyLevel: '',
+        date: new Date(),
+        manager: '',
+        selectedVolunteers: []
+      });
+    } else {
+      console.error('Failed to create event');
+    }
   };
 
-  const handleDeleteEvent = (id) => {
-    setEvents(events.filter(event => event.id !== id));
+  // Delete event
+  const handleDeleteEvent = async (id) => {
+    const response = await fetch(`http://localhost:5000/api/events/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      setEvents(events.filter((event) => event.id !== id));
+    } else {
+      console.error('Failed to delete event');
+    }
   };
 
-  const matchVolunteers = (event) => {
-    if (!event.requiredSkills.length) return [];
-    return volunteers.filter((volunteer) =>
-      volunteer.skills.some(skill => event.requiredSkills.some(req => req.value === skill))
-    );
+  // Match volunteers to an event
+  const handleMatchVolunteers = async (eventId) => {
+    const response = await fetch(`http://localhost:5000/api/events/match-volunteers/${eventId}`, {
+      method: 'POST',
+    });
+
+    if (response.ok) {
+      const matchedVolunteers = await response.json();
+      setEventDetails((prevState) => ({
+        ...prevState,
+        selectedVolunteers: matchedVolunteers.map((volunteer) => ({
+          value: volunteer.id,
+          label: volunteer.name,
+        })),
+      }));
+    } else {
+      console.error('Failed to match volunteers');
+    }
   };
 
   return (
@@ -109,12 +166,19 @@ const EventManagement = () => {
           <p><strong>Manager:</strong> {event.manager}</p>
           <p><strong>Date:</strong> {event.date.toDateString()}</p>
           <button onClick={() => handleDeleteEvent(event.id)}>Delete</button>
+          
           <h4>Matched Volunteers</h4>
+          <button onClick={() => handleMatchVolunteers(event.id)}>
+            Match Volunteers
+          </button>
+
           <Select
-            options={matchVolunteers(event).map(volunteer => ({ value: volunteer.id, label: volunteer.name }))}
+            options={eventDetails.selectedVolunteers}
             isMulti
             onChange={handleVolunteerChange}
             classNamePrefix="custom-select"
+            value={eventDetails.selectedVolunteers}
+            isDisabled
           />
         </div>
       ))}
