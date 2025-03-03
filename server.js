@@ -93,10 +93,6 @@ app.get("/api/admin/:id", (req, res) => {
   }
 }); 
 
-// Root route (display a message when visiting http://localhost:5000)
-app.get('/', (req, res) => {
-  res.send('Server is running. Use /api/events or /api/volunteers to interact with the API.');
-});
 
 // In-memory arrays for events and volunteers
 let events = [];
