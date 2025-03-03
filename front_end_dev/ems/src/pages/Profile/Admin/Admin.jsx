@@ -13,6 +13,21 @@ const AdminProfile = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:5000/api/logout", {
+        method: "POST",
+        credentials: "include", 
+      });
+      localStorage.removeItem("user");
+      localStorage.removeItem("adminId"); 
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchAdmin = async () => {
       try {
@@ -57,6 +72,9 @@ const AdminProfile = () => {
   if (!admin) {
     return <p>Loading...</p>;
   }
+  if (!admin) {
+    return null; 
+  }
   return (
     <div className="profile-container">
       <h2>
@@ -68,10 +86,11 @@ const AdminProfile = () => {
 
       
       <div className="button-container">
-          <button className="btn">View Profile</button>
         <Link to="/">
           <button className="btn">Home</button>
         </Link>
+        <button className = "btn" onClick={handleLogout}>Logout</button>
+
         
       </div>
     </div>
