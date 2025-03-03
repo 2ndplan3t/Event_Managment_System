@@ -63,6 +63,7 @@ app.get("/api/test", (req, res) => {
     res.json({ message: "Backend is working" });
   });
 
+
  
 // Login route
 app.post("/api/login", (req, res) => {
@@ -92,9 +93,18 @@ app.get("/api/admin/:id", (req, res) => {
   }
 }); 
 
+// Root route (display a message when visiting http://localhost:5000)
+app.get('/', (req, res) => {
+  res.send('Server is running. Use /api/events or /api/volunteers to interact with the API.');
+});
 
 // In-memory arrays for events and volunteers
 let events = [];
+let volunteers = [
+  { id: 1, name: 'Alice', skills: ['First - Aid', 'Logistics'] },
+  { id: 2, name: 'Bob', skills: ['Security', 'Social and Cultural'] },
+  { id: 3, name: 'Charlie', skills: ['First - Aid', 'Security'] },
+];
 
 
 // Utility to match volunteers with event required skills
