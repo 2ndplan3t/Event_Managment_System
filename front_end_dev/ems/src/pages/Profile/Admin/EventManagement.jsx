@@ -97,8 +97,13 @@ const EventManagement = () => {
   
       if (response.ok) {
         const createdEvent = await response.json();
-        setEvents([...events, createdEvent]);
-  
+
+        // Get the volunteers for the dropdown menu
+        const matchedVolunteers = await volunteerMatch(createdEvent);
+
+        setEvents([...events, { ...createdEvent, matchedVolunteers, selectedVolunteers: []}]);
+
+        
         // Reset event form
         setEventDetails({
           name: '',
@@ -118,6 +123,36 @@ const EventManagement = () => {
     }
   };
   
+  // Volunteer match on creation
+  const volunteerMatch = async (event) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+  
+      const users = await response.json();
+      const requiredSkills = event.requiredSkills.map(skill => skill.value);
+
+      const matchedVolunteers = users
+      .filter(user => 
+        user.role === 'volunteer' && 
+        user.skills.some(skill => requiredSkills.includes(skill))
+      )
+      .map(volunteer => ({
+        value: volunteer.id,
+        label: volunteer.fullName,
+      }));
+
+      return matchedVolunteers; // send back the list
+    }
+
+    // else, error
+    catch (error){
+      console.error(error.message);
+      return [];
+    }
+  }
 
   // Delete event
   const handleDeleteEvent = async (id) => {
@@ -152,14 +187,16 @@ const EventManagement = () => {
       const requiredSkills = events[eventIndex].requiredSkills.map(skill => skill.value);
 
       const matchedVolunteers = users
-        .filter(user => 
-          user.role === 'volunteer' && 
-          user.skills.some(skill => requiredSkills.includes(skill))
-        )
-        .map(volunteer => ({
-          value: volunteer.id,
-          label: volunteer.fullName,
-        }));
+      .filter(user => 
+        user.role === 'volunteer' && 
+        user.skills.some(skill => requiredSkills.includes(skill))
+      )
+      .map(volunteer => ({
+        value: volunteer.id,
+        label: volunteer.fullName,
+      }));
+
+
   
      
       const updatedEvents = events.map(event =>
