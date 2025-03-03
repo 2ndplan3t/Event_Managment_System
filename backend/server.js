@@ -103,7 +103,6 @@ app.get("/api/admin/profile", requireAuth, (req, res) => {
   if (user.role !== "admin") {
     return res.status(403).json({ message: "Access denied: Admins only" });
   }
-  // Return the admin's profile data from the session
   res.json({
     id: user.id,
     email: user.email,
