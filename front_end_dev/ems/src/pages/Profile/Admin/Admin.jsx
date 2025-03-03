@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom';
 import EventManagement from './EventManagement';
 //import './event.css';
 
@@ -9,29 +10,45 @@ import EventManagement from './EventManagement';
 const AdminProfile = () => {
   const [admin, setAdmin] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAdmin = async () => {
-      const adminId = localStorage.getItem("adminId");
-      if (!adminId) {
-        setError("No admin logged in");
-        return;
-      }
-  
       try {
-        const response = await fetch(`http://localhost:5000/api/admin/${adminId}`);
+        const response = await fetch("http://localhost:5000/api/admin/profile", {
+          method: "GET",
+          credentials: "include", 
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
         if (!response.ok) {
-          throw new Error("Failed to fetch admin data");
+          if (response.status === 401) {
+            setError("Session expired. Redirecting to login...");
+            setTimeout(() => navigate("/login"), 2000);
+            return;
+          } else if (response.status === 403) {
+            setError("Access denied: Admins only. Redirecting to home...");
+            setTimeout(() => navigate("/"), 2000);
+            return;
+          } else {
+            throw new Error("Failed to fetch admin data");
+          }
         }
+
         const data = await response.json();
         setAdmin(data);
       } catch (error) {
         setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchAdmin();
-}, []);
+  }, [navigate]);
 
   if (error) {
     return <p className="error">Error: {error}</p>;

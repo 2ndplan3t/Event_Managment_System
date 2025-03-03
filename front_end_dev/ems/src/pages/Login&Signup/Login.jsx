@@ -3,9 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './Login.css'; 
 import Home from '../FrontPage/home';
 
-
 function Login() {
-
   const location = useLocation();
   const [isSignUp, setIsSignUp] = useState(location.state?.signup || false);
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -13,32 +11,29 @@ function Login() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
-
-//closing login/signup will redirect to the homepage
+  // Closing login/signup will redirect to the homepage
   const closeModal = () => {
-    setIsModalOpen(false); 
-    navigate('/'); 
+    setIsModalOpen(false);
+    navigate('/');
   };
- //alternative to clicking 'x' to exit out:
- //click outside the login/signup box or press escape to go back to the home page 
+
   const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {  
+    if (e.target === e.currentTarget) {
       closeModal();
     }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
-      closeModal(); 
+      closeModal();
     }
   };
 
   const passwordValidation = (password) => {
-    // the password has at least 8 characters and contains at least one number
-    const lengthCondition = /.{8,}/;  
-    const numberCondition = /\d/;     
+    const lengthCondition = /.{8,}/;
+    const numberCondition = /\d/;
 
     if (!lengthCondition.test(password)) {
       return 'Password must be at least 8 characters long';
@@ -46,8 +41,9 @@ function Login() {
     if (!numberCondition.test(password)) {
       return 'Password must contain at least one number';
     }
-    return '';  
+    return '';
   };
+
   const handleTabSwitch = (isSignUp) => {
     setIsSignUp(isSignUp);
     setEmail('');
@@ -56,11 +52,10 @@ function Login() {
     setError('');
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-  
+
     if (isSignUp) {
       const passwordError = passwordValidation(password);
       if (passwordError) {
@@ -71,36 +66,62 @@ function Login() {
         setError("Passwords do not match");
         return;
       }
-      console.log("Sign-up logic needs backend implementation.");
+
+      try {
+        const response = await fetch("http://localhost:5000/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include', // Include cookies for session
+          body: JSON.stringify({
+            fullName: email.split("@")[0],
+            email,
+            password,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Registration failed");
+        }
+
+        const data = await response.json();
+        console.log("Registration successful:", data);
+        alert("Sign-up successful! You can now log in.");
+        setIsSignUp(false);
+      } catch (error) {
+        setError("Registration failed. Email may already be in use.");
+        console.error("Sign-up error:", error);
+      }
     } else {
       if (!email || !password) {
         setError("Please fill in both fields");
         return;
       }
-  
+
       try {
         const response = await fetch("http://localhost:5000/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: 'include', // Include cookies for session
           body: JSON.stringify({ email, password }),
         });
-  
+
         if (!response.ok) {
           throw new Error("Invalid email or password");
         }
-  
+
         const data = await response.json();
         console.log("Login successful:", data);
 
-        localStorage.setItem("user", JSON.stringify(data));
-  
-        if (data.role === "admin") {
-          localStorage.setItem("adminId", data.id);
+        // Store user data in localStorage (no token since we're using sessions)
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        if (data.user.role === "admin") {
+          localStorage.setItem("adminId", data.user.id);
           navigate("/admin");
-        } else if (data.role === "volunteer") {
+        } else if (data.user.role === "volunteer") {
           navigate("/user");
-        }else {
-          navigate("/"); //undefined user role
+        } else {
+          navigate("/");
         }
       } catch (error) {
         setError("Invalid email or password");
@@ -111,14 +132,13 @@ function Login() {
 
   return (
     <>
-    <Home />
+      <Home />
       {isModalOpen && (
-        <div className="modal-overlay" onClick={handleOverlayClick}>
+        <div className="modal-overlay" onClick={handleOverlayClick} onKeyDown={handleKeyDown} tabIndex={0}>
           <div className="log-in-container">
             <div className="login-form-container">
               <button className="login-close-btn" onClick={closeModal}>×</button>
 
-              {/* toggle buttons for Login/SignUp */}
               <div className="login-form-toggle">
                 <button
                   className={isSignUp ? '' : 'active'}
@@ -138,19 +158,20 @@ function Login() {
                 <h2>{isSignUp ? 'Sign Up' : 'Login'}</h2>
 
                 <input
-                 type="email"
-                 placeholder="Email"
-                 value={email}
-                 onChange={(e) => setEmail(e.target.value)}
-                 required 
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
 
-                <input 
-                 type="password" 
-                 placeholder="Password"
-                 value={password} 
-                 onChange={(e) => setPassword(e.target.value)}
-                 required />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
 
                 {isSignUp && (
                   <input

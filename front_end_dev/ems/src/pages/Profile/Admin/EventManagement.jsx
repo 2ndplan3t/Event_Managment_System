@@ -166,8 +166,8 @@ const EventManagement = () => {
         event.id === eventId
           ? { 
               ...event, 
-              matchedVolunteers,      // Store only matched volunteers for dropdown
-              selectedVolunteers: matchedVolunteers // Auto-select them
+              matchedVolunteers,     
+              selectedVolunteers: matchedVolunteers
             }
           : event
       );

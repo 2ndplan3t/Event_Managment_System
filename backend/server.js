@@ -1,13 +1,27 @@
 const express = require("express");
+const session = require("express-session");
 const cors = require("cors");
+const bcrypt = require('bcrypt');
 require("dotenv").config();
 
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,  
+}));
 app.use(express.json());
-//hardcoded admin and volunteer profiles
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "super_secret_key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, httpOnly: true, maxAge: 3600000 },
+  })
+);
+
+// Hardcoded admin and volunteer profiles
 const users = [
     { id: 1,
       email: "admin@example.com",
@@ -51,128 +65,134 @@ const users = [
          status: "Completed" }],
       notifications: []
     },
-       
+];
 
-  ];
-  app.get("/api/users", (req, res) => {
-    res.json(users);
+const requireAuth = (req, res, next) => {
+    if (!req.session.user) return res.status(401).json({ message: "Unauthorized" });
+    next();
+};
+
+// User Registration Route
+app.post("/api/register", async (req, res) => {
+    const { fullName, email, password, role = "volunteer", skills = [] } = req.body;
+    if (users.some(user => user.email === email)) return res.status(400).json({ message: "Email already in use." });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = { id: users.length + 1, email, password: hashedPassword, role, fullName, skills };
+    users.push(newUser);
+    res.status(201).json({ message: "Registration successful" });
+});
+
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find((u) => u.email === email && u.password === password); // Direct comparison
+  if (!user) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+  req.session.user = { id: user.id, email: user.email, role: user.role, fullName: user.fullName };
+  console.log("Session set:", req.session); // Debug
+  res.json({ message: "Login successful", user: req.session.user });
+});
+
+
+app.post("/api/logout", (req, res) => {
+    req.session.destroy(() => res.json({ message: "Logout successful" }));
+});
+
+app.get("/api/admin/profile", requireAuth, (req, res) => {
+  const user = req.session.user;
+  if (user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied: Admins only" });
+  }
+  // Return the admin's profile data from the session
+  res.json({
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    role: user.role,
   });
-   
+});
 
-//to check messages in the console log, press F12 in the browser
-//testing backend connection
+app.get("/", (req, res) => {
+    res.send("Welcome to the server");
+});
+
+// Testing backend connection
 app.get("/api/test", (req, res) => {
     res.json({ message: "Backend is working" });
-  });
-
- 
-// Login route
-app.post("/api/login", (req, res) => {
-    const { email, password } = req.body;
-    const user = users.find((u) => u.email === email && u.password === password);
-  
-    if (user) {
-      res.json({
-        message: "Login successful",
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
-    }
-  });
-
-// route to get admin profile/event management page
-app.get("/api/admin/:id", (req, res) => {
-  const admin = users.find((user) => user.id === parseInt(req.params.id) && user.role === "admin");
-  if (admin) {
-      res.json(admin);
-  } else {
-      res.status(404).json({ message: "Admin not found" });
-  }
-}); 
-
+});
 
 let events = [];
 
-
-// match volunteers with event required skills
+// Match volunteers with event required skills
 const matchVolunteers = (event) => {
-  const volunteers = users.filter(user => user.role === "volunteer");
-
-  return volunteers.filter((volunteer) =>
-    volunteer.skills.some((skill) => event.requiredSkills.includes(skill))
-  );
+    const volunteers = users.filter(user => user.role === "volunteer");
+    return volunteers.filter((volunteer) =>
+        volunteer.skills.some((skill) => event.requiredSkills.includes(skill))
+    );
 };
 
-// Create a new event
+
 app.post('/api/events', (req, res) => {
-  const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
-  const newEvent = {
-    id: events.length + 1,
-    name,
-    location,
-    envoy,
-    requiredSkills,
-    urgencyLevel,
-    date,
-    manager,
-    selectedVolunteers: [],
-  };
-  events.push(newEvent);
-  res.status(201).json(newEvent);
+    const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
+    const newEvent = {
+        id: events.length + 1,
+        name,
+        location,
+        envoy,
+        requiredSkills,
+        urgencyLevel,
+        date,
+        manager,
+        selectedVolunteers: [],
+    };
+    events.push(newEvent);
+    res.status(201).json(newEvent);
 });
 
-// Get all events
+
 app.get('/api/events', (req, res) => {
-  res.json(events);
+    res.json(events);
 });
-
 
 app.delete('/api/events/:id', (req, res) => {
-  const eventId = parseInt(req.params.id, 10);
-  console.log(`Deleting event with ID: ${eventId}`);
-  events = events.filter((event) => event.id !== eventId);
-  console.log('Updated events:', events);
-  res.status(200).json({ message: 'Event deleted successfully.' });
+    const eventId = parseInt(req.params.id, 10);
+    console.log(`Deleting event with ID: ${eventId}`);
+    events = events.filter((event) => event.id !== eventId);
+    console.log('Updated events:', events);
+    res.status(200).json({ message: 'Event deleted successfully.' });
 });
 
-// Create a new volunteer
+
 app.post('/api/volunteers', (req, res) => {
-  const { name, skills } = req.body;
-  const newVolunteer = {
-    id: volunteers.length + 1,
-    name,
-    skills,
-  };
-  volunteers.push(newVolunteer);
-  res.status(201).json(newVolunteer);
+    const { name, skills } = req.body;
+    const newVolunteer = {
+        id: users.length + 1,
+        name,
+        skills,
+    };
+    users.push(newVolunteer); // Changed from volunteers to users
+    res.status(201).json(newVolunteer);
 });
 
-// Get all volunteers
+
 app.get('/api/volunteers', (req, res) => {
-  const volunteers = users.filter(user => user.role === 'volunteer');
-  res.json(volunteers);
+    const volunteers = users.filter(user => user.role === 'volunteer');
+    res.json(volunteers);
 });
 
-// Match volunteers to an event
+
 app.post('/api/events/match-volunteers/:eventId', (req, res) => {
-  const eventId = parseInt(req.params.eventId, 10);
-  const event = events.find((e) => e.id === eventId);
+    const eventId = parseInt(req.params.eventId, 10);
+    const event = events.find((e) => e.id === eventId);
 
-  if (!event) {
-    return res.status(404).json({ message: 'Event not found.' });
-  }
+    if (!event) {
+        return res.status(404).json({ message: 'Event not found.' });
+    }
 
-  // Get the matched volunteers
-  const matchedVolunteers = matchVolunteers(event);
-  res.json(matchedVolunteers);
+    const matchedVolunteers = matchVolunteers(event);
+    res.json(matchedVolunteers);
 });
-
-
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
