@@ -9,7 +9,7 @@ function Notifications() {
 
   useEffect(() => {
     // Fetch user session 
-    fetch('http://localhost:5000/api/admin/profile', {
+    fetch('http://localhost:5000/api/profile', {
       method: 'GET',
       credentials: 'include', 
     })
