@@ -67,6 +67,17 @@ const users = [
     },
 ];
 
+const hashPasswords = async () => {
+  for (let user of users) {
+      const hashedPassword = await bcrypt.hash(user.password, 10);
+      user.password = hashedPassword;  
+  }
+  console.log("Users with hashed passwords:", users);
+};
+
+
+hashPasswords();
+
 const requireAuth = (req, res, next) => {
     if (!req.session.user) return res.status(401).json({ message: "Unauthorized" });
     next();
@@ -74,27 +85,41 @@ const requireAuth = (req, res, next) => {
 
 // User Registration Route
 app.post("/api/register", async (req, res) => {
-    const { fullName, email, password, role = "volunteer", skills = [] } = req.body;
-    if (users.some(user => user.email === email)) return res.status(400).json({ message: "Email already in use." });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = { id: users.length + 1, email, password: hashedPassword, role, fullName, skills };
-    users.push(newUser);
-    res.status(201).json({ message: "Registration successful" });
+    try {
+        const { fullName, email, password, role = "volunteer", skills = [] } = req.body;
+        if (users.some(user => user.email === email)) return res.status(400).json({ message: "Email already in use." });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = { id: users.length + 1, email, password: hashedPassword, role, fullName, skills };
+        users.push(newUser);
+        res.status(201).json({ message: "Registration successful" });
+    } catch (error) {
+        console.error("Registration error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
 });
 
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
-  const user = users.find((u) => u.email === email && u.password === password); // Direct comparison
+  const user = users.find((u) => u.email === email); 
+
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
+
+  const isValidPassword = await bcrypt.compare(password, user.password);
+
+  if (!isValidPassword) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
   req.session.user = { id: user.id, email: user.email, role: user.role, fullName: user.fullName };
-  console.log("Session set:", req.session); // Debug
+  console.log("Session set:", req.session); 
   res.json({ message: "Login successful", user: req.session.user });
 });
 
 
 app.post("/api/logout", (req, res) => {
+    req.session.user = null;
     req.session.destroy(() => res.json({ message: "Logout successful" }));
 });
 
@@ -111,6 +136,13 @@ app.get("/api/admin/profile", requireAuth, (req, res) => {
   });
 });
 
+app.get("/api/profile", (req, res) => {
+  if (req.session.user) {  // Check if user is authenticated via session
+      res.json({ profileData: req.session.user });
+  } else {
+      res.status(401).json({ message: "Not authenticated" });
+  }
+});
 app.get("/", (req, res) => {
     res.send("Welcome to the server");
 });

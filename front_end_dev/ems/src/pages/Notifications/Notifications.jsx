@@ -1,20 +1,37 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import Navbar from '../Profile/User/Navigation';
 import './Notifications.css'
 
 function Notifications() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+  const [user, setUser] = useState(null); // Define the user state
 
+  useEffect(() => {
+    // Fetch user session 
+    fetch('http://localhost:5000/api/admin/profile', {
+      method: 'GET',
+      credentials: 'include', 
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Not authorized');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setUser(data);
+      })
+      .catch((error) => {
+        console.error('Error fetching user profile:', error);
+        setUser(null); 
+      });
+  }, []);
   return (
     <div className="no-global-reset">
     <div className="root">
       <header class="notif_page">
-        <div class="nav_buttons"> 
-         <Link to="/"> <button type="button">Home</button> </Link>
-         <Link to="/user"> <button type="button">Profile</button> </Link>
-         <Link to="/admin"><button type="button">Manage Event</button></Link>
-         <Link to="/history"><button type="button">History</button></Link>
-        </div>
+        <Navbar/>
         <h1>Notifications</h1>
       </header>
       <div class="notif_area">

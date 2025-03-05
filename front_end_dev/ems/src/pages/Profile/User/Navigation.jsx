@@ -7,7 +7,6 @@ function Navbar() {
         const navigate = useNavigate();
       
         useEffect(() => {
-          // Check if user is logged in via localStorage
           const storedUser = localStorage.getItem("user");
           if (storedUser) {
             setUser(JSON.parse(storedUser));
@@ -35,7 +34,7 @@ function Navbar() {
                 <li><Link to="/user">Profile</Link></li>
                 <li><Link to="/notifications">Notifications</Link></li>
                 <li><Link to="/history">History</Link></li>
-                <li><Link to="/" onClick={handleLogout}>Logout</Link></li>
+                <li><Link to="" onClick={handleLogout}>Logout</Link></li>
             </ul>
         </nav>
     );

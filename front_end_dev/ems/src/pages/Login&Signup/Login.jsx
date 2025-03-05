@@ -71,7 +71,7 @@ function Login() {
         const response = await fetch("http://localhost:5000/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: 'include', // Include cookies for session
+          credentials: 'include', 
           body: JSON.stringify({
             fullName: email.split("@")[0],
             email,
@@ -101,7 +101,7 @@ function Login() {
         const response = await fetch("http://localhost:5000/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: 'include', // Include cookies for session
+          credentials: 'include', 
           body: JSON.stringify({ email, password }),
         });
 
@@ -112,7 +112,6 @@ function Login() {
         const data = await response.json();
         console.log("Login successful:", data);
 
-        // Store user data in localStorage (no token since we're using sessions)
         localStorage.setItem("user", JSON.stringify(data.user));
 
         if (data.user.role === "admin") {
