@@ -121,6 +121,7 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/logout", (req, res) => {
     req.session.user = null;
     req.session.destroy(() => res.json({ message: "Logout successful" }));
+    console.log("Logout successful");
 });
 
 app.get("/api/admin/profile", requireAuth, (req, res) => {
