@@ -108,10 +108,11 @@ const matchVolunteers = (event) => {
 };
 
 // Create a new event
+const event_num = 0;
 app.post('/api/events', (req, res) => {
   const { name, location, envoy, requiredSkills, urgencyLevel, date, manager, matchedVolunteers } = req.body;
   const newEvent = {
-    id: events.length + 1,
+    id: event_num+1,
     name,
     location,
     envoy,
