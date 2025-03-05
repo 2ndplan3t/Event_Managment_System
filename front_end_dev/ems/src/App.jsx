@@ -1,29 +1,38 @@
-import { useState } from 'react'
+
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
 import './App.css'
+import Home from './pages/FrontPage/home'
+import Login from './pages/Login&Signup/Login';
+import Donate from './pages/FrontPage/Donate/Donate';
+import EventForm from './pages/Profile/Admin/AdminEventForm';
+import ProfilePage from './pages/Profile/User/ProfilePage';
+import VolunteerHistory from './pages/Profile/User/VolunteerHistory';
+import Notifications from './pages/Notifications/Notifications';
+import { useEffect } from 'react';
 
 function App() {
-  const [count, setCount] = useState(0)
-
+    // test backend connection. use f12 in the browser to check if it works
+    useEffect(() => {
+      fetch('http://localhost:5000/api/test')
+      .then(response => response.json())
+      .then(data => console.log(data.message))
+      .catch(error => console.error("Error connecting to backend:", error));
+    }, []);
+    
   return (
-    <>
-      <header class="notif_page">
-        <div class="nav_buttons"> 
-          <button type="button">Home</button>
-          <button type="button">Profile</button>
-          <button type="button">Manage Event</button>
-        </div>
-        <h1>Notifications</h1>
-      </header>
-      <div class="notif_area">
-        <p class="notification">This is a test notification</p>
-        <p class="notification">This is a test notification</p>
-        <p class="notification">This is a test notification</p>
-      </div>
-      <footer>
-        <p><a href= "https://github.com/2ndplan3t/Event_Managment_System/tree/main"><img src="src/assets/GitHub-logo.png" alt="Github Link" width="80px" height="40px"></img></a> &copy; Copyright Group 9</p>
-      </footer>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Login />} />
+        <Route path="/donate" element={<Donate />} />
+        <Route path="/admin" element={<EventForm />} />
+        <Route path="/user" element={<ProfilePage />} />
+        <Route path="/history" element={<VolunteerHistory />} />
+        <Route path="/notifications" element={<Notifications />} />
+      </Routes>
+    </Router>
+  );
 }
-
 export default App

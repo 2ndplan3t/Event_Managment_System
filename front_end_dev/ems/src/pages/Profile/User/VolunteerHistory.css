@@ -1,0 +1,22 @@
+/* Volunteer History Table Styling */
+.volunteer-history-container {
+    text-align: center;
+    padding: 20px;
+}
+
+.volunteer-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.volunteer-history-th, .volunteer-history-td {
+    background-color: #8c9657;
+    padding: 10px;
+    border: 5px solid #444034;
+    text-align: left;
+}
+
+.volunteer-history-th {
+    font-weight: bold;
+}
