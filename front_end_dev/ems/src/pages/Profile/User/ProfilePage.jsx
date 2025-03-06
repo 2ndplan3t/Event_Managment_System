@@ -26,7 +26,7 @@ function ProfilePage() {
     }, [userId]); // only runs when component mounts
 
     const handleFormSubmit = (data) => {
-        setProfileData(data); // Save submitted data in state
+        setProfileData(data); 
     };
 
     

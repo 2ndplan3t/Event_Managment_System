@@ -8,7 +8,7 @@ function VolunteerHistory() {
     useEffect(() => {
         const fetchVolunteerHistory = async () => {
             try {
-                const userId = 4; // Replace with dynamic user id later
+                const userId = 4; //replace with dynamic user id later
                 const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
                 if (!response.ok) {
                     throw new Error("Failed to fetch volunteer history");

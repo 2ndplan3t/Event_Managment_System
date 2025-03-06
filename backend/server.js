@@ -159,7 +159,7 @@ app.get("/api/volunteer-history/:id", (req, res) => {
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
   const { event, eventdesc, location, date, status } = req.body;
-  
+
   if (!fullName){return res.status(400).json({ message: "Full name is required" });}
   if (!address1){return res.status(400).json({ message: "Address is required" });}
   if (!city){return res.status(400).json({ message: "City is required" });}
@@ -182,7 +182,7 @@ app.post("/api/volunteer-history/:id", (req, res) => {
   res.json({ message: "Volunteer history updated successfully", volunteerHistory: user.volunteerHistory });
 });
 
-//delete a volunteer event from a user's history
+//delete volunteer event from a user's history
 app.delete("/api/volunteer-history/:id/:eventIndex", (req, res) => {
   const userId = parseInt(req.params.id);
   const eventIndex = parseInt(req.params.eventIndex);

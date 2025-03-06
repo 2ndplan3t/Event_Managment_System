@@ -49,7 +49,7 @@ function UserProfile({ userId,onSubmit }) {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(formData), // Send the form data
+            body: JSON.stringify(formData), //send form data
         })
         .then((response) => response.json())
         .then((data) => {

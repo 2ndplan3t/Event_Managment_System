@@ -15,7 +15,7 @@ const users = [
   { id: 4, email: "alice@example.com", password: "volunteer_123", role: "volunteer", fullName: "Alice", skills: ["First Aid", "Logistics"], volunteerHistory: [{ event: "Charity Run", location: "18427 Southwest Fwy, Sugar Land, TX 77479", date: "2024-06-15", status: "Completed" }], notifications: [] }
 ];
 
-// Endpoints
+// endpoints
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is working" });
 });
