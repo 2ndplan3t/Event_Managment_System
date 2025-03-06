@@ -1,15 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserProfile from "./userProfile"; 
 import Navbar from "./Navigation"; 
 import './UserProfile.css';
 
 function ProfilePage() {
     const [profileData, setProfileData] = useState(null);
+    const userId = 3; //edit so this can be dynamically changed later
+
+    useEffect(() => {
+        // Fetch user data from the backend
+        const fetchProfileData = async () => {
+            try {
+                const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
+                if (!response.ok) {
+                    throw new Error("Profile data not found");
+                }
+                const data = await response.json();
+                setProfileData(data); // Set the fetched data in the state
+            } catch (error) {
+                console.error("Error fetching profile data:", error);
+            }
+        };
+
+        fetchProfileData();
+    }, [userId]); // Dependency array ensures this runs only once when component mounts
 
     const handleFormSubmit = (data) => {
         setProfileData(data); // Save submitted data in state
     };
 
+    
     return (
         <div className="profilepage">
             <Navbar />
