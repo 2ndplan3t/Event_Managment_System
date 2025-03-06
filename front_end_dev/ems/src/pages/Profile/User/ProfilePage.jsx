@@ -8,7 +8,7 @@ function ProfilePage() {
     const userId = 3; //edit so this can be dynamically changed later
 
     useEffect(() => {
-        // Fetch user data from the backend
+        // get user data from the backend
         const fetchProfileData = async () => {
             try {
                 const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
@@ -16,14 +16,14 @@ function ProfilePage() {
                     throw new Error("Profile data not found");
                 }
                 const data = await response.json();
-                setProfileData(data); // Set the fetched data in the state
+                setProfileData(data);
             } catch (error) {
                 console.error("Error fetching profile data:", error);
             }
         };
 
         fetchProfileData();
-    }, [userId]); // Dependency array ensures this runs only once when component mounts
+    }, [userId]); // only runs when component mounts
 
     const handleFormSubmit = (data) => {
         setProfileData(data); // Save submitted data in state

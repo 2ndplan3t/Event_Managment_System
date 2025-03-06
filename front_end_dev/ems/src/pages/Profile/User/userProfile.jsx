@@ -54,10 +54,8 @@ function UserProfile({ userId,onSubmit }) {
         .then((response) => response.json())
         .then((data) => {
             if (data.errors) {
-                // Handle validation errors
                 console.log(data.errors);
             } else {
-                // Handle success
                 onSubmit(data.user);
             }
         })

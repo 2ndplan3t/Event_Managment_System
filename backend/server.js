@@ -106,11 +106,6 @@ app.post("/api/profile/:id", (req, res) => {
   const userId = parseInt(req.params.id);
   const { fullName, address1, address2, city, state, zipCode, skills, preferences, availability } = req.body;
 
-  // Validate incoming data
-  //if (!fullName || !address1 || !city || !state || !zipCode || !skills) {
-  //  return res.status(400).json({ message: "Missing required fields" });
- // }
-
   if (!fullName){return res.status(400).json({ message: "Full name is required" });}
   if (!address1){return res.status(400).json({ message: "Address is required" });}
   if (!city){return res.status(400).json({ message: "City is required" });}
@@ -140,6 +135,7 @@ app.post("/api/profile/:id", (req, res) => {
 });
 
 //volunteer history
+
 //get a user's volunteer history
 app.get("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
@@ -163,11 +159,7 @@ app.get("/api/volunteer-history/:id", (req, res) => {
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
   const { event, eventdesc, location, date, status } = req.body;
-
-  //if (!event || !eventdesc || !location || !date || !status) {
-  //    return res.status(400).json({ message: "Missing required fields" });
-  //}
-
+  
   if (!fullName){return res.status(400).json({ message: "Full name is required" });}
   if (!address1){return res.status(400).json({ message: "Address is required" });}
   if (!city){return res.status(400).json({ message: "City is required" });}
