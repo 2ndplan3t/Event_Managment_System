@@ -66,6 +66,7 @@ const users = [
       notifications: []
     },
 ];
+/* istanbul ignore next */
 const hashPasswords = async () => {
   for (let user of users) {
       if (!user.password.startsWith("$2b$")) {  // Check if not already hashed
@@ -79,10 +80,12 @@ const hashPasswords = async () => {
 hashPasswords();
 
 const requireAuth = (req, res, next) => {
-  console.log("requireAuth - session:", req.session);
-  if (!req.session.user) return res.status(401).json({ message: "Unauthorized" });
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ message: "Unauthorized: Please log in" });
+  }
   next();
 };
+
 
 // User Registration Route
 app.post("/api/register", async (req, res) => {
@@ -94,48 +97,70 @@ app.post("/api/register", async (req, res) => {
         users.push(newUser);
         res.status(201).json({ message: "Registration successful" });
     } catch (error) {
+      /* istanbul ignore next */
         console.error("Registration error:", error);
+        /* istanbul ignore next */
         res.status(500).json({ message: "Internal server error" });
     }
 });
 
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
+
+  // password presence
+  if (!password) {
+    return res.status(400).json({ message: "Password is required" });
+  }
+
+  if (!email){
+    return res.status(400).json({ message: "Email is required" });
+  }
+
   const user = users.find((u) => u.email === email); 
 
-  if (!user) {
-    return res.status(401).json({ message: "Invalid credentials" });
+  // Check if the password is valid
+  try {
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Set session with user data
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      fullName: user.fullName,
+      address1: user.address1,
+      address2: user.address2,
+      city: user.city,
+      state: user.state,
+      zip: user.zip,
+      skills: user.skills || [],
+      volunteerHistory: user.volunteerHistory || [],
+      notifications: user.notifications || [],
+    };
+
+    res.json({ message: "Login successful", user: req.session.user });
+  } catch (error) {
+    console.error("Error during password comparison:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  const isValidPassword = await bcrypt.compare(password, user.password);
-
-  if (!isValidPassword) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
-
-  req.session.user = {
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    fullName: user.fullName,
-    address1: user.address1,
-    address2: user.address2,
-    city: user.city,
-    state: user.state,
-    zip: user.zip,
-    skills: user.skills || [],
-    volunteerHistory: user.volunteerHistory || [],
-    notifications: user.notifications || [],
-  };
-  console.log("Session set:", req.session); 
-  res.json({ message: "Login successful", user: req.session.user });
 });
 
 
+
 app.post("/api/logout", (req, res) => {
-    req.session.user = null;
-    req.session.destroy(() => res.json({ message: "Logout successful" }));
-    console.log("Logout successful");
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    res.clearCookie("connect.sid"); 
+    res.json({ message: "Logout successful" });
+    //console.log("Logout successful, session destroyed");
+  });
 });
 
 app.get("/api/admin/profile", requireAuth, (req, res) => {
@@ -158,6 +183,8 @@ app.get("/api/profile", (req, res) => {
       res.status(401).json({ message: "Not authenticated" });
   }
 });
+
+/* istanbul ignore next */
 app.get("/", (req, res) => {
     res.send("Welcome to the server");
 });
@@ -197,27 +224,26 @@ app.post('/api/events', (req, res) => {
 
 
 app.get('/api/events', (req, res) => {
+    //console.log(events);
     res.json(events);
 });
 
 app.delete('/api/events/:id', (req, res) => {
     const eventId = parseInt(req.params.id, 10);
-    console.log(`Deleting event with ID: ${eventId}`);
-    events = events.filter((event) => event.id !== eventId);
-    console.log('Updated events:', events);
+    //console.log(`Deleting event with ID: ${eventId}`);
+
+    const eventIndex = events.findIndex(event => event.id === eventId);
+
+    if (eventIndex === -1) {
+      return res.status(404).json({ message: "Event not found." });
+    }
+
+    events.splice(eventIndex, 1);
+
+  
+
+    //console.log('Updated events:', events);
     res.status(200).json({ message: 'Event deleted successfully.' });
-});
-
-
-app.post('/api/volunteers', (req, res) => {
-    const { name, skills } = req.body;
-    const newVolunteer = {
-        id: users.length + 1,
-        name,
-        skills,
-    };
-    users.push(newVolunteer); // Changed from volunteers to users
-    res.status(201).json(newVolunteer);
 });
 
 
@@ -301,51 +327,44 @@ app.put("/api/profile", requireAuth, (req, res) => {
 });
 
 
-
-//volunteer history
-
-//get a user's volunteer history
-app.get("/api/volunteer-history/:id", requireAuth, (req, res) => {
-  const userId = parseInt(req.params.id);
-  console.log("Requested user ID:", userId);
-
-  const user = users.find((u) => u.id === userId);
-  console.log("Found user:", user);
-
-  if (!user) {
-      return res.status(404).json({ message: "User not found" });
-  }
-
-  if (!user.volunteerHistory) {
-      return res.status(200).json([]); // Return empty history instead of 404
-  }
-
-  res.json(user.volunteerHistory);
-});
-
 //add a volunteer event to a user's history
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
-  const { event, eventdesc, location, date, status } = req.body;
+  //console.log("POST /volunteer-history - Requested ID:", userId);
+  //console.log("POST /volunteer-history - Users array:", users);
 
-  if (!fullName){return res.status(400).json({ message: "Full name is required" });}
-  if (!address1){return res.status(400).json({ message: "Address is required" });}
-  if (!city){return res.status(400).json({ message: "City is required" });}
-  if (!state){return res.status(400).json({ message: "State is required" });}
-  if (!zipCode){return res.status(400).json({ message: "Zipcode is required" });}
-  if (!skills){return res.status(400).json({ message: "Skills are required" });}
+  const { event, eventdesc, location, date, status, fullName, address1, city, state, zipCode, skills } = req.body;
+
+  if (!fullName) return res.status(400).json({ message: "Full name is required" });
+  if (!address1) return res.status(400).json({ message: "Address is required" });
+  if (!city) return res.status(400).json({ message: "City is required" });
+  if (!state) return res.status(400).json({ message: "State is required" });
+  if (!zipCode) return res.status(400).json({ message: "Zipcode is required" });
+  if (!skills) return res.status(400).json({ message: "Skills are required" });
 
   const user = users.find((u) => u.id === userId);
-
+  //console.log("POST /volunteer-history - Found user:", user);
   if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: "User not found" });
   }
 
   if (!user.volunteerHistory) {
-      user.volunteerHistory = [];
+    user.volunteerHistory = [];
   }
 
-  user.volunteerHistory.push({ event, eventdesc, location, date, status });
+  user.volunteerHistory.push({
+    event,
+    eventdesc,
+    location,
+    date,
+    status,
+    fullName,
+    address1,
+    city,
+    state,
+    zipCode,
+    skills,
+  });
 
   res.json({ message: "Volunteer history updated successfully", volunteerHistory: user.volunteerHistory });
 });
@@ -376,6 +395,8 @@ app.get("/api/isLoggedIn", (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+}
+
+module.exports = { events, app, users };

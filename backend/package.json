@@ -16,17 +16,12 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-<<<<<<< HEAD
     "express-session": "^1.18.1",
-=======
-    "express-validator": "^7.2.1",
->>>>>>> b854539ca4424d689e7cda397a35341528f3774b
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "supertest-session": "^5.0.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^7.0.0"
   }
-
-  
 }

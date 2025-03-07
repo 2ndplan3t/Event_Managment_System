@@ -9,34 +9,27 @@ function VolunteerHistory() {
     
     useEffect(() => {
         const fetchUserProfile = async () => {
-            try {
-                const response = await fetch(`http://localhost:5000/api/profile`, { credentials: 'include' });
-                const data = await response.json();
-                setUser(data.profileData);
-            } catch (error) {
-                console.error("Error fetching profile:", error);
+          try {
+            const response = await fetch("http://localhost:5000/api/profile", {
+              credentials: "include",
+            });
+            if (!response.ok) {
+              throw new Error(`Profile fetch failed: ${response.status} ${response.statusText}`);
             }
+            const data = await response.json();
+            console.log("Profile response:", data);
+            setUser(data.profileData);
+            setVolunteerHistory(data.profileData.volunteerHistory || []); // Set history from profile
+          } catch (error) {
+            console.error("Error fetching profile:", error);
+            setError(error.message);
+          } finally {
+            setLoading(false);
+          }
         };
-
         fetchUserProfile();
-    }, []);
+      }, []);
 
-    useEffect(() => {
-        if (user) {
-            const fetchVolunteerHistory = async () => {
-                try {
-                    const response = await fetch(`http://localhost:5000/api/volunteer-history/${user.id}`);
-                    const data = await response.json();
-                    setVolunteerHistory(data);
-                    setLoading(false);
-                } catch (error) {
-                    console.error("Error fetching history:", error);
-                    setLoading(false);
-                }
-            };
-            fetchVolunteerHistory();
-        }
-    }, [user]);
 
 
     return (
