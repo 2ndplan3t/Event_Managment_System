@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
+<<<<<<< HEAD
 import { useNavigate } from "react-router-dom";
 import UserProfile from "./userProfile";
 import Navbar from "./Navigation";
+=======
+import UserProfile from "./userProfile"; 
+import Navbar from "./Navigation"; 
+>>>>>>> b854539ca4424d689e7cda397a35341528f3774b
 import './UserProfile.css';
 
 function ProfilePage() {
     const [profileData, setProfileData] = useState(null);
+<<<<<<< HEAD
     const [originalProfileData, setOriginalProfileData] = useState(null); // Store original data
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -109,6 +115,33 @@ function ProfilePage() {
         );
     }
 
+=======
+    const userId = 3; //edit so this can be dynamically changed later
+
+    useEffect(() => {
+        // get user data from the backend
+        const fetchProfileData = async () => {
+            try {
+                const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
+                if (!response.ok) {
+                    throw new Error("Profile data not found");
+                }
+                const data = await response.json();
+                setProfileData(data);
+            } catch (error) {
+                console.error("Error fetching profile data:", error);
+            }
+        };
+
+        fetchProfileData();
+    }, [userId]); // only runs when component mounts
+
+    const handleFormSubmit = (data) => {
+        setProfileData(data); 
+    };
+
+    
+>>>>>>> b854539ca4424d689e7cda397a35341528f3774b
     return (
         <div className="profilepage">
             <Navbar />

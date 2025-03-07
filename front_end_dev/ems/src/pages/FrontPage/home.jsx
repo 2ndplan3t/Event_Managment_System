@@ -14,11 +14,25 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    const checkLoginStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/isLoggedIn", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.loggedIn) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error checking login status:", error);
+      }
+    };
+    
+    checkLoginStatus();
+  }, []); 
 
   const handleLogout = async () => {
     try {
@@ -26,8 +40,6 @@ function Home() {
         method: "POST",
         credentials: "include", 
       });
-      localStorage.removeItem("user");
-      localStorage.removeItem("adminId"); 
       setUser(null);
       navigate("/");
     } catch (error) {
