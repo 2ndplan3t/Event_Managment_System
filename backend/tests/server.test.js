@@ -94,6 +94,7 @@ describe('POST /api/login', () => {
 });
 
 
+
 describe("GET /api/isLoggedIn and PUT /api/profile", () => {
   let cookie;
 
@@ -127,9 +128,17 @@ describe("GET /api/isLoggedIn and PUT /api/profile", () => {
 
     //console.log("isLoggedIn status:", sessionCheckResponse.status);
     //console.log("isLoggedIn body:", sessionCheckResponse.body);
-
+    
     expect(sessionCheckResponse.status).toBe(200);
     expect(sessionCheckResponse.body.loggedIn).toBe(true);
+  });
+
+  it('should return loggedIn false if user is not logged in', async () => {
+    // Simulate an empty session (logged-out state)
+    const response = await request(app).get('/api/isLoggedIn');
+    
+    expect(response.status).toBe(200); // Ensure a successful request
+    expect(response.body.loggedIn).toBe(false); // Ensure loggedIn is false
   });
 
   it("should update profile successfully for authenticated user", async () => {
@@ -287,7 +296,64 @@ describe("GET /api/profile", () => {
     expect(response.body.message).toBe("Not authenticated");
   });
 });
+beforeEach(() => {
+  events.length = 0;
+});
 
+describe('POST /api/events', () => {
+  
+  it('should create a new event successfully', async () => {
+    // Test data
+    const newEventData = {
+      name: 'Test Event',
+      location: 'Test Location',
+      envoy: 'Test Envoy',
+      requiredSkills: ['First Aid'],
+      urgencyLevel: 'High',
+      date: '2025-03-15',
+      manager: 'Test Manager',
+    };
+
+    // Send POST request
+    const response = await request(app)
+      .post('/api/events')
+      .send(newEventData);
+
+    // Check the response status and body
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      id: expect.any(Number),  // ID should be a number, and it should be assigned properly
+      name: 'Test Event',
+      location: 'Test Location',
+      envoy: 'Test Envoy',
+      requiredSkills: ['First Aid'],
+      urgencyLevel: 'High',
+      date: '2025-03-15',
+      manager: 'Test Manager',
+      selectedVolunteers: [],  // Default selectedVolunteers should be an empty array
+    });
+
+    // Also check if the event was added to the events array
+    expect(events.length).toBe(1);
+    expect(events[0].name).toBe('Test Event');
+  });
+
+  it('should return a 400 error if required fields are missing', async () => {
+    // Send POST request with missing required fields
+    const response = await request(app)
+      .post('/api/events')
+      .send({
+        name: 'Test Event', // Missing other required fields like location, envoy, etc.
+      });
+
+    // Check the response status and message
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Required fields are missing');
+    
+    // Ensure no events are created when there is a validation error
+    expect(events.length).toBe(0);
+  });
+});
 
 describe("GET /api/events", () => {
   beforeEach(() => {
@@ -661,7 +727,138 @@ describe("POST /api/volunteer-history/:id", () => {
     expect(response.body.message).toBe("User not found");
   });
 
-  // Add your other tests for missing fields here...
+  it("should return 400 if fullName is missing", async () => {
+    const newEvent = {
+      event: "Food Drive",
+      eventdesc: "Collected food for the needy",
+      location: "123 Elm St",
+      date: "2024-07-01",
+      status: "Completed",
+      address1: "456 Oak St",
+      city: "Houston",
+      state: "TX",
+      zipCode: "77001",
+      skills: ["First Aid", "Security"],
+    };
+  
+    const response = await request(app)
+      .post("/api/volunteer-history/3")
+      .send(newEvent);
+  
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Full name is required");
+  });
+  
+  it("should return 400 if address1 is missing", async () => {
+    const newEvent = {
+      event: "Food Drive",
+      eventdesc: "Collected food for the needy",
+      location: "123 Elm St",
+      date: "2024-07-01",
+      status: "Completed",
+      fullName: "Charlie",
+      city: "Houston",
+      state: "TX",
+      zipCode: "77001",
+      skills: ["First Aid", "Security"],
+    };
+  
+    const response = await request(app)
+      .post("/api/volunteer-history/3")
+      .send(newEvent);
+  
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Address is required");
+  });
+  
+  it("should return 400 if city is missing", async () => {
+    const newEvent = {
+      event: "Food Drive",
+      eventdesc: "Collected food for the needy",
+      location: "123 Elm St",
+      date: "2024-07-01",
+      status: "Completed",
+      fullName: "Charlie",
+      address1: "456 Oak St",
+      state: "TX",
+      zipCode: "77001",
+      skills: ["First Aid", "Security"],
+    };
+  
+    const response = await request(app)
+      .post("/api/volunteer-history/3")
+      .send(newEvent);
+  
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("City is required");
+  });
+  
+  it("should return 400 if state is missing", async () => {
+    const newEvent = {
+      event: "Food Drive",
+      eventdesc: "Collected food for the needy",
+      location: "123 Elm St",
+      date: "2024-07-01",
+      status: "Completed",
+      fullName: "Charlie",
+      address1: "456 Oak St",
+      city: "Houston",
+      zipCode: "77001",
+      skills: ["First Aid", "Security"],
+    };
+  
+    const response = await request(app)
+      .post("/api/volunteer-history/3")
+      .send(newEvent);
+  
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("State is required");
+  });
+  
+  it("should return 400 if zipCode is missing", async () => {
+    const newEvent = {
+      event: "Food Drive",
+      eventdesc: "Collected food for the needy",
+      location: "123 Elm St",
+      date: "2024-07-01",
+      status: "Completed",
+      fullName: "Charlie",
+      address1: "456 Oak St",
+      city: "Houston",
+      state: "TX",
+      skills: ["First Aid", "Security"],
+    };
+  
+    const response = await request(app)
+      .post("/api/volunteer-history/3")
+      .send(newEvent);
+  
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Zipcode is required");
+  });
+  
+  it("should return 400 if skills are missing", async () => {
+    const newEvent = {
+      event: "Food Drive",
+      eventdesc: "Collected food for the needy",
+      location: "123 Elm St",
+      date: "2024-07-01",
+      status: "Completed",
+      fullName: "Charlie",
+      address1: "456 Oak St",
+      city: "Houston",
+      state: "TX",
+      zipCode: "77001",
+    };
+  
+    const response = await request(app)
+      .post("/api/volunteer-history/3")
+      .send(newEvent);
+  
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Skills are required");
+  });
+  
 });
 
 describe("DELETE /api/volunteer-history/:id/:eventIndex", () => {
