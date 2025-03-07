@@ -29,6 +29,7 @@
     background-color: #b9c57f; 
     border-color: #444034; 
   }
+  
   .notif_area{
     display: grid;
     grid-template-columns: 1fr;
@@ -42,11 +43,40 @@
   }
   
   .notification{
+    position: relative;
+    background-color: #dccfa0;
     border: 2px dashed #8c9657;
     width: auto;
     margin: auto 20px auto 20px;
     padding: 20px;
+    text-align: left;
+  }
+
+  .notification span {
+    display: inline-block; 
+    max-width: 500px; 
+    word-wrap: break-word; 
+    overflow-wrap: break-word; 
+    text-align: left;
+  }
+
+  .notification h3 {
     text-align: center;
+  }
+  
+  .clear {
+    position: absolute;
+    color: #444034;
+    top: -10px;
+    right: -10px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  
+  .clear:hover {
+    color: #ac130b;
   }
   
   .card {

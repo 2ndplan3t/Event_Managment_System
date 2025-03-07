@@ -45,7 +45,18 @@ const users = [
       zip:"",
       skills: ["First Aid", "Security"],
       volunteerHistory: [],
-      notifications: [] },
+      // all of this gets heavily changed later I just wanted it to kinda reflect how it'll look in the database w/ foreign keys n stuff
+      notifications: [
+        { notifID: 0,
+          eventID: 0,
+          eventName: "Cleaning the Beach", // usually you'd use a query for this but alas
+          type: "Assignment",
+          // there will be a way to time notifications later on, but for now this works
+          isCleared: false, // did the user clear this notification?
+          isVisible: true, // Should this notification be visible to the user?
+          text: "You've been assigned to an event! What follows is the event details:" //this will also be heavily changed
+        }
+      ]},
     { id: 4, 
       email: "alice@example.com", 
       password: "volunteer_123", 
@@ -153,6 +164,65 @@ app.get("/api/test", (req, res) => {
     res.json({ message: "Backend is working" });
 });
 
+// get the users list
+app.get("/api/users", (req, res) => {
+  res.json(users);
+});
+
+
+// Edit the event's selected users
+app.put('/api/events/:id', async(req, res) =>{
+  const eventId = parseInt(req.params.id, 10);
+  const eventData = req.body;
+  const eventIndex = events.findIndex((event) => event.id === eventId);
+  
+  // if event couldn't be found:
+  if (eventIndex === -1) {
+    return res.status(404).json({ message: 'Event not found' });  // Return a 404 if the event does not exist
+  }
+  
+  // otherwise, we update the event
+  const updatedEvent = {
+    ...events[eventIndex],
+    ...eventData,
+  };
+
+  events[eventIndex] = updatedEvent;
+  return res.status(200).json(updatedEvent);
+});
+
+// get notifications from the user
+app.get("/api/users/:id", (req, res) => {
+  const userAcc = users.find((user) => user.id === parseInt(req.params.id));
+  if(userAcc){
+    res.json(userAcc);
+  }
+  else{
+    res.status(404).json({ message: "No user found - how did you get here?" });
+  }
+});
+
+// Edit user's notifications
+app.put("/api/users/:id", async(req, res) =>{
+  const userId = parseInt(req.params.id, 10);
+  const newNotifs = req.body;
+  const userIndex = users.findIndex((user) => user.id === userId);
+  
+  // if user cannot be found
+  if (userIndex === -1) {
+    return res.status(404).json({ message: 'User not found' });  // Return a 404 if the user does not exist
+  }
+  
+  // otherwise, we update the user
+  const updatedUser = {
+    ...users[userIndex],
+    notifications: newNotifs
+  };
+
+  users[userIndex] = updatedUser;
+  return res.status(200).json(updatedUser);
+});
+
 let events = [];
 
 // Match volunteers with event required skills
@@ -175,6 +245,7 @@ app.post('/api/events', (req, res) => {
         urgencyLevel,
         date,
         manager,
+        matchedVolunteers: [],
         selectedVolunteers: [],
     };
     events.push(newEvent);
