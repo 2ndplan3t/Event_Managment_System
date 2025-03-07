@@ -138,7 +138,7 @@ function Login() {
             <div className="login-form-container">
               <button className="login-close-btn" onClick={closeModal}>×</button>
 
-              <div className="login-form-toggle">
+              <div className="login-form-toggle" data-testid="login-form-toggle">
                 <button
                   className={isSignUp ? '' : 'active'}
                   onClick={() => handleTabSwitch(false)}
@@ -153,7 +153,7 @@ function Login() {
                 </button>
               </div>
 
-              <form className="login-form" onSubmit={handleSubmit}>
+              <form className="login-form" onSubmit={handleSubmit} data-testid="login-form">
                 <h2>{isSignUp ? 'Sign Up' : 'Login'}</h2>
 
                 <input

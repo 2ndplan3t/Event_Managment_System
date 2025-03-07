@@ -37,12 +37,12 @@ const users = [
       email: "charlie@example.com", 
       password: "volunteer_123", 
       role:"volunteer", 
-      fullName: "Charlie" ,
-      address1:"",
+      fullName: "Charlie Brown" ,
+      address1:"1267 Main street",
       address2:"",
-      city: "",
-      state: "",
-      zip:"",
+      city: "Long Island",
+      state: "NY",
+      zip:"88580",
       skills: ["First Aid", "Security"],
       volunteerHistory: [],
       notifications: [] },
@@ -202,7 +202,7 @@ const matchVolunteers = (event) => {
     );
 };
 
-
+const event_num = 0;
 app.post('/api/events', (req, res) => {
   
     const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
@@ -223,6 +223,26 @@ app.post('/api/events', (req, res) => {
     events.push(newEvent);
     res.status(201).json(newEvent);
 });
+// Edit the event's selected users
+app.put('/api/events/:id', async(req, res) =>{
+  const eventId = parseInt(req.params.id, 10);
+  const eventData = req.body;
+  const eventIndex = events.findIndex((event) => event.id === eventId);
+  
+  // if event couldn't be found:
+  if (eventIndex === -1) {
+    return res.status(404).json({ message: 'Event not found' });  // Return a 404 if the event does not exist
+  }
+  
+  // otherwise, we update the event
+  const updatedEvent = {
+    ...events[eventIndex],
+    ...eventData,
+  };
+
+  events[eventIndex] = updatedEvent;
+  return res.status(200).json(updatedEvent);
+});
 
 
 app.get('/api/events', (req, res) => {
@@ -231,21 +251,11 @@ app.get('/api/events', (req, res) => {
 });
 
 app.delete('/api/events/:id', (req, res) => {
-    const eventId = parseInt(req.params.id, 10);
-    //console.log(`Deleting event with ID: ${eventId}`);
-
-    const eventIndex = events.findIndex(event => event.id === eventId);
-
-    if (eventIndex === -1) {
-      return res.status(404).json({ message: "Event not found." });
-    }
-
-    events.splice(eventIndex, 1);
-
-  
-
-    //console.log('Updated events:', events);
-    res.status(200).json({ message: 'Event deleted successfully.' });
+  const eventId = parseInt(req.params.id, 10);
+  console.log(`Deleting event with ID: ${eventId}`);
+  events = events.filter((event) => event.id !== eventId);
+  console.log('Updated events:', events);
+  res.status(200).json({ message: 'Event deleted successfully.' });
 });
 
 

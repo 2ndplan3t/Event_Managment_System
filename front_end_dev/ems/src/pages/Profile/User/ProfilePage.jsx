@@ -1,119 +1,60 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import UserProfile from "./userProfile";
-import Navbar from "./Navigation";
+import UserProfile from "./userProfile"; 
+import Navbar from "./Navigation"; 
 import './UserProfile.css';
 
 function ProfilePage() {
     const [profileData, setProfileData] = useState(null);
-    const [originalProfileData, setOriginalProfileData] = useState(null); // Store original data
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isEditing, setIsEditing] = useState(false); // Track editing state
-    const navigate = useNavigate();
+    const userId = 3; //edit so this can be dynamically changed later
 
     useEffect(() => {
-        const fetchUserProfile = async () => {
+        // get user data from the backend
+        const fetchProfileData = async () => {
             try {
-                const response = await fetch("http://localhost:5000/api/profile", {
-                    method: "GET",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                if (response.status === 401) {
-                    setIsAuthenticated(false);
-                    navigate('/login');
-                    return;
-                }
-
+                const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error("Profile data not found");
                 }
-
                 const data = await response.json();
-                setProfileData(data.profileData);
-                setOriginalProfileData(data.profileData); 
-                setIsAuthenticated(true);
+                setProfileData(data);
             } catch (error) {
-                console.error('Error fetching profile:', error);
-                setError(error.message);
-                setIsAuthenticated(false);
-                navigate('/login');
-            } finally {
-                setIsLoading(false);
+                console.error("Error fetching profile data:", error);
             }
         };
 
-        fetchUserProfile();
-    }, [navigate]);
+        fetchProfileData();
+    }, [userId]); // only runs when component mounts
 
-    const handleFormSubmit = (updatedProfile) => {
-        console.log("Received updated profile:", updatedProfile);
-        setProfileData(updatedProfile);
-        setOriginalProfileData(updatedProfile);
-        setIsEditing(false);
+    const handleFormSubmit = (data) => {
+        setProfileData(data); 
     };
 
-    const handleCancelEdit = () => {
-        setProfileData(originalProfileData); // Restore original data
-        setIsEditing(false);
-    };
-
-    const handleEditClick = () => {
-        setIsEditing(true);
-    };
-
-    if (isLoading) return <div className="profilepage"><Navbar /><h2>Loading profile...</h2></div>;
-    if (error) return <div className="profilepage"><Navbar /><h2>Error: {error}</h2></div>;
-    if (!isAuthenticated) return <div className="profilepage"><Navbar /><h2>You are not authenticated. Please log in.</h2></div>;
-
-
+    
     return (
         <div className="profilepage">
             <Navbar />
-            <h1>Profile Management</h1>
-            
-            {isEditing || !profileData ? (
-                <div>
-                    <UserProfile 
-                        initialData={profileData} 
-                        onSubmit={handleFormSubmit}
-                    />
-                    {profileData && (
-                        <button 
-                            onClick={handleCancelEdit}
-                            className="btn"
-                        >
-                            Cancel
-                        </button>
-                    )}
-                </div>
+
+            <h1>Profile Management Form</h1>
+            {!profileData ? (
+                <UserProfile onSubmit={handleFormSubmit} />
             ) : (
                 <div>
                     <h2>Profile Information</h2>
                     <div className="profile-info-section">
-                        <p><strong>Full Name:</strong> {profileData.fullName || 'Not set'}</p>
-                        <p><strong>Email:</strong> {profileData.email || 'Not set'}</p>
-                        <p><strong>Address 1:</strong> {profileData.address1 || 'Not set'}</p>
-                        <p><strong>Address 2:</strong> {profileData.address2 || 'Not set'}</p>
-                        <p><strong>City:</strong> {profileData.city || 'Not set'}</p>
-                        <p><strong>State:</strong> {profileData.state || 'Not set'}</p>
-                        <p><strong>Zip Code:</strong> {profileData.zip || 'Not set'}</p>
-                        <p><strong>Skills:</strong> {profileData.skills?.length ? profileData.skills.join(", ") : 'None'}</p>
-                        <p><strong>Role:</strong> {profileData.role || 'Not set'}</p>
+                        <p><strong>Full Name:</strong> {profileData.fullName}</p>
+                        <p><strong>Address 1:</strong> {profileData.address1}</p>
+                        <p><strong>Address 2:</strong> {profileData.address2}</p>
+                        <p><strong>City:</strong> {profileData.city}</p>
+                        <p><strong>State:</strong> {profileData.state}</p>
+                        <p><strong>Zip Code:</strong> {profileData.zipCode}</p>
+                        <p><strong>Skills:</strong> {profileData.skills.join(", ")}</p>
+                        <p><strong>Preferences:</strong> {profileData.preferences}</p>
+                        <p><strong>Availability:</strong> {profileData.availability}</p>
                     </div>
-                    <button 
-                        onClick={handleEditClick}
-                        className="btn"
-                    >
-                        Edit Profile
-                    </button>
+
                 </div>
             )}
+            
         </div>
     );
 }

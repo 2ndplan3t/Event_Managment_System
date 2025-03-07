@@ -3,33 +3,27 @@ import './VolunteerHistory.css';
 import React, { useState, useEffect  } from "react";
 
 function VolunteerHistory() {
-    const [user, setUser] = useState(null);
     const [volunteerHistory, setVolunteerHistory] = useState([]);
-    const [loading, setLoading] = useState(true);
-    
-    useEffect(() => {
-        const fetchUserProfile = async () => {
-          try {
-            const response = await fetch("http://localhost:5000/api/profile", {
-              credentials: "include",
-            });
-            if (!response.ok) {
-              throw new Error(`Profile fetch failed: ${response.status} ${response.statusText}`);
-            }
-            const data = await response.json();
-            console.log("Profile response:", data);
-            setUser(data.profileData);
-            setVolunteerHistory(data.profileData.volunteerHistory || []); // Set history from profile
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-            setError(error.message);
-          } finally {
-            setLoading(false);
-          }
-        };
-        fetchUserProfile();
-      }, []);
 
+    useEffect(() => {
+        const fetchVolunteerHistory = async () => {
+            try {
+                const userId = 4; //replace with dynamic user id later
+                const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch volunteer history");
+                }
+                const userData = await response.json();
+                if (userData.volunteerHistory) {
+                    setVolunteerHistory(userData.volunteerHistory);
+                }
+            } catch (error) {
+                console.error("Error fetching volunteer history:", error);
+            }
+        };
+
+        fetchVolunteerHistory();
+    }, []);
 
 
     return (
