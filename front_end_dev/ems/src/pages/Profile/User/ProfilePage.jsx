@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
 import { useNavigate } from "react-router-dom";
 import UserProfile from "./userProfile";
 import Navbar from "./Navigation";
-=======
-import UserProfile from "./userProfile"; 
-import Navbar from "./Navigation"; 
->>>>>>> b854539ca4424d689e7cda397a35341528f3774b
 import './UserProfile.css';
 
 function ProfilePage() {
     const [profileData, setProfileData] = useState(null);
-<<<<<<< HEAD
     const [originalProfileData, setOriginalProfileData] = useState(null); // Store original data
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +36,7 @@ function ProfilePage() {
 
                 const data = await response.json();
                 setProfileData(data.profileData);
-                setOriginalProfileData(data.profileData); // Store original data
+                setOriginalProfileData(data.profileData); 
                 setIsAuthenticated(true);
             } catch (error) {
                 console.error('Error fetching profile:', error);
@@ -57,26 +51,11 @@ function ProfilePage() {
         fetchUserProfile();
     }, [navigate]);
 
-    const handleFormSubmit = async (data) => {
-        try {
-            const response = await fetch("http://localhost:5000/api/profile", {
-                method: "PUT", // Assuming you'll add a PUT endpoint in backend
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
-
-            if (response.ok) {
-                const updatedData = await response.json();
-                setProfileData(updatedData.profileData);
-                setOriginalProfileData(updatedData.profileData);
-                setIsEditing(false);
-            }
-        } catch (error) {
-            console.error('Error updating profile:', error);
-        }
+    const handleFormSubmit = (updatedProfile) => {
+        console.log("Received updated profile:", updatedProfile);
+        setProfileData(updatedProfile);
+        setOriginalProfileData(updatedProfile);
+        setIsEditing(false);
     };
 
     const handleCancelEdit = () => {
@@ -88,60 +67,11 @@ function ProfilePage() {
         setIsEditing(true);
     };
 
-    if (isLoading) {
-        return (
-            <div className="profilepage">
-                <Navbar />
-                <h2>Loading profile...</h2>
-            </div>
-        );
-    }
+    if (isLoading) return <div className="profilepage"><Navbar /><h2>Loading profile...</h2></div>;
+    if (error) return <div className="profilepage"><Navbar /><h2>Error: {error}</h2></div>;
+    if (!isAuthenticated) return <div className="profilepage"><Navbar /><h2>You are not authenticated. Please log in.</h2></div>;
 
-    if (error) {
-        return (
-            <div className="profilepage">
-                <Navbar />
-                <h2>Error: {error}</h2>
-            </div>
-        );
-    }
 
-    if (!isAuthenticated) {
-        return (
-            <div className="profilepage">
-                <Navbar />
-                <h2>You are not authenticated. Please log in.</h2>
-            </div>
-        );
-    }
-
-=======
-    const userId = 3; //edit so this can be dynamically changed later
-
-    useEffect(() => {
-        // get user data from the backend
-        const fetchProfileData = async () => {
-            try {
-                const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
-                if (!response.ok) {
-                    throw new Error("Profile data not found");
-                }
-                const data = await response.json();
-                setProfileData(data);
-            } catch (error) {
-                console.error("Error fetching profile data:", error);
-            }
-        };
-
-        fetchProfileData();
-    }, [userId]); // only runs when component mounts
-
-    const handleFormSubmit = (data) => {
-        setProfileData(data); 
-    };
-
-    
->>>>>>> b854539ca4424d689e7cda397a35341528f3774b
     return (
         <div className="profilepage">
             <Navbar />

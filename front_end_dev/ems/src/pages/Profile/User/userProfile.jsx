@@ -43,24 +43,42 @@ function UserProfile({ userId,onSubmit }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Send POST request to backend to save data
-        fetch(`http://localhost:5000/api/profile/${userId}`, {
-            method: "POST",
+        const requiredFields = ["fullName", "address1", "city", "state", "zipCode", "skills"];
+        const missingFields = requiredFields.filter(field => 
+            !formData[field] || 
+            formData[field] === "" || 
+            (field === "skills" && formData[field].length === 0)
+        );
+        if (missingFields.length > 0) {
+            console.error("Missing or empty required fields:", missingFields);
+            return;
+        }
+        console.log("Sending formData:", formData);
+        fetch("http://localhost:5000/api/profile", {
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(formData), //send form data
+            body: JSON.stringify(formData),
+            credentials: "include",
         })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.errors) {
-                console.log(data.errors);
-            } else {
-                onSubmit(data.user);
+        .then((response) => {
+            console.log("Response status:", response.status, "OK:", response.ok);
+            if (!response.ok) {
+                return response.json().then((err) => {
+                    console.log("Error response:", err);
+                    throw new Error(err.message || response.status);
+                });
             }
+            return response.json();
+        })
+        .then((data) => {
+            console.log("Success response:", data);
+            onSubmit(data.profileData); // Pass updated profile back to ProfilePage
         })
         .catch((error) => console.error("Error saving user profile:", error));
     };
+
 
     const toggleDropdown = () => {
         setDropdownOpen(prevState => !prevState);

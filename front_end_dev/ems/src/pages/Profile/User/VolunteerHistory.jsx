@@ -3,27 +3,40 @@ import './VolunteerHistory.css';
 import React, { useState, useEffect  } from "react";
 
 function VolunteerHistory() {
+    const [user, setUser] = useState(null);
     const [volunteerHistory, setVolunteerHistory] = useState([]);
-
+    const [loading, setLoading] = useState(true);
+    
     useEffect(() => {
-        const fetchVolunteerHistory = async () => {
+        const fetchUserProfile = async () => {
             try {
-                const userId = 4; //replace with dynamic user id later
-                const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
-                if (!response.ok) {
-                    throw new Error("Failed to fetch volunteer history");
-                }
-                const userData = await response.json();
-                if (userData.volunteerHistory) {
-                    setVolunteerHistory(userData.volunteerHistory);
-                }
+                const response = await fetch(`http://localhost:5000/api/profile`, { credentials: 'include' });
+                const data = await response.json();
+                setUser(data.profileData);
             } catch (error) {
-                console.error("Error fetching volunteer history:", error);
+                console.error("Error fetching profile:", error);
             }
         };
 
-        fetchVolunteerHistory();
+        fetchUserProfile();
     }, []);
+
+    useEffect(() => {
+        if (user) {
+            const fetchVolunteerHistory = async () => {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/volunteer-history/${user.id}`);
+                    const data = await response.json();
+                    setVolunteerHistory(data);
+                    setLoading(false);
+                } catch (error) {
+                    console.error("Error fetching history:", error);
+                    setLoading(false);
+                }
+            };
+            fetchVolunteerHistory();
+        }
+    }, [user]);
 
 
     return (
