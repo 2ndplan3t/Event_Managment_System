@@ -252,9 +252,17 @@ app.get('/api/events', (req, res) => {
 
 app.delete('/api/events/:id', (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  console.log(`Deleting event with ID: ${eventId}`);
+  //console.log(`Deleting event with ID: ${eventId}`);
+  
+  // Find if the event exists before filtering
+  const eventExists = events.some(event => event.id === eventId);
+  //console.log('Events before deletion:', events)
+  if (!eventExists) {
+    return res.status(404).json({ message: 'Event not found' });
+  }
+  
   events = events.filter((event) => event.id !== eventId);
-  console.log('Updated events:', events);
+  //console.log('Updated events:', events);
   res.status(200).json({ message: 'Event deleted successfully.' });
 });
 
@@ -266,15 +274,23 @@ app.get('/api/volunteers', (req, res) => {
 
 
 app.post('/api/events/match-volunteers/:eventId', (req, res) => {
-    const eventId = parseInt(req.params.eventId, 10);
-    const event = events.find((e) => e.id === eventId);
+  const eventId = parseInt(req.params.eventId, 10);
+  console.log('Event ID:', eventId); // Debug: Log the eventId
+  console.log('Events in server:', events); // Debug: Log the events array
 
-    if (!event) {
-        return res.status(404).json({ message: 'Event not found.' });
-    }
+  const event = events.find(e => e.id === eventId);
 
-    const matchedVolunteers = matchVolunteers(event);
-    res.json(matchedVolunteers);
+  if (!event) {
+    return res.status(404).json({ message: "Event not found." });
+  }
+
+  const requiredSkills = event.requiredSkills;
+  const matchedVolunteers = users.filter(user => 
+    user.role === "volunteer" && 
+    requiredSkills.some(skill => user.skills.includes(skill))
+  );
+
+  res.status(200).json(matchedVolunteers);
 });
 
 //user profile management

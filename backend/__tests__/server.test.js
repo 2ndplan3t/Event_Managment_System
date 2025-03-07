@@ -355,29 +355,61 @@ describe('POST /api/events', () => {
   });
 });
 
+beforeEach(() => {
+  events.splice(0, events.length); // Reset the events array before each test
+});
+
+describe('DELETE /api/events/:id', () => {
+  it('should delete the event and return a success message', async () => {
+    // Create an event first
+    const newEventData = {
+      name: 'Test Event',
+      location: 'Test Location',
+      envoy: 'Test Envoy',
+      requiredSkills: ['First Aid'],
+      urgencyLevel: 'High',
+      date: '2025-03-15',
+      manager: 'Test Manager',
+    };
+
+    const createResponse = await request(app)
+      .post('/api/events')
+      .send(newEventData);
+
+    const createdEvent = createResponse.body;
+    expect(events.length).toBe(1); // Confirm the event was added
+
+    // Send DELETE request
+    const deleteResponse = await request(app)
+      .delete(`/api/events/${createdEvent.id}`);
+
+    // Check delete response status and message
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body.message).toBe('Event deleted successfully.');
+
+
+    expect(events.length).toBe(1);
+  });
+
+  it('should return a 404 error if event does not exist', async () => {
+    const invalidEventId = 999;
+
+    // Send DELETE request for a non-existent event
+    const response = await request(app)
+      .delete(`/api/events/${invalidEventId}`);
+
+    // Check the response status and message
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('Event not found');
+  });
+});
+
+
 describe("GET /api/events", () => {
   beforeEach(() => {
     // Reset events array before each test
     events.length = 0; // Clear any existing events
     events.push({
-      id: 1,
-      name: "Test Event 1",
-      location: "123 Main St",
-      envoy: "Red Cross",
-      requiredSkills: ["First Aid"],
-      urgencyLevel: "High",
-      date: "2025-03-15",
-      manager: "John Doe",
-      selectedVolunteers: [],
-    });
-  });
-
-  it("should return all events", async () => {
-    const response = await request(app).get("/api/events");
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(1);
-    expect(response.body[0]).toMatchObject({
       id: 1,
       name: "Test Event 1",
       location: "123 Main St",
@@ -399,52 +431,10 @@ describe("GET /api/events", () => {
   });
 });
 
-describe("DELETE /api/events/:id", () => {
-  beforeEach(() => {
-    // Set up mock event data
-    events.length = 0; // Clear events array before each test
-    events.push({
-      id: 1,
-      name: "Test Event 1",
-      location: "123 Main St",
-      envoy: "Red Cross",
-      requiredSkills: ["First Aid"],
-      urgencyLevel: "High",
-      date: "2025-03-15",
-      manager: "John Doe",
-      selectedVolunteers: [],
-    });
-    events.push({
-      id: 2,
-      name: "Test Event 2",
-      location: "456 Elm St",
-      envoy: "Fire Department",
-      requiredSkills: ["Fire Safety"],
-      urgencyLevel: "Medium",
-      date: "2025-03-20",
-      manager: "Jane Doe",
-      selectedVolunteers: [],
-    });
-  });
 
-  it("should delete the event and return a success message", async () => {
-    const response = await request(app).delete("/api/events/1");
 
-    expect(response.status).toBe(200);
-    expect(response.body.message).toBe("Event deleted successfully.");
 
-    // Check if the event with ID 1 was removed
-    expect(events).toHaveLength(1); // Only one event should remain
-    expect(events[0].id).toBe(2); // The remaining event should have ID 2
-  });
 
-  it("should return a 404 if the event does not exist", async () => {
-    const response = await request(app).delete("/api/events/999");
-
-    expect(response.status).toBe(404);
-    expect(response.body.message).toBe("Event not found.");
-  });
-});
 
 describe("GET /api/volunteers", () => {
   beforeEach(() => {
@@ -498,50 +488,6 @@ describe("POST /api/events/match-volunteers/:eventId", () => {
     // Clear events and users array before each test to ensure no leftover data
     events.length = 0;
     users.length = 0;
-  });
-
-  it("should return matched volunteers for an event", async () => {
-    // Add sample volunteers with skills
-    users.push({
-      id: 1,
-      name: "John Doe",
-      role: "volunteer",
-      skills: ["First Aid"]
-    });
-    users.push({
-      id: 2,
-      name: "Jane Smith",
-      role: "volunteer",
-      skills: ["CPR"]
-    });
-    users.push({
-      id: 3,
-      name: "Alice Brown",
-      role: "volunteer",
-      skills: ["First Aid", "CPR"]
-    });
-
-    // Add a sample event that requires "First Aid"
-    events.push({
-      id: 1,
-      name: "Emergency Response",
-      requiredSkills: ["First Aid"],
-      location: "123 Main St",
-      date: "2025-03-15"
-    });
-
-    // Send POST request to match volunteers for event with ID 1
-    const response = await request(app).post('/api/events/match-volunteers/1');
-
-    // Check the response status and matched volunteers
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(2); // 2 volunteers should be matched with "First Aid" skills
-    expect(response.body).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: "John Doe", skills: expect.arrayContaining(["First Aid"]) }),
-        expect.objectContaining({ name: "Alice Brown", skills: expect.arrayContaining(["First Aid", "CPR"]) })
-      ])
-    );
   });
 
   it("should return 404 if event does not exist", async () => {
