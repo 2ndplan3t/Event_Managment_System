@@ -79,8 +79,9 @@ const hashPasswords = async () => {
 hashPasswords();
 
 const requireAuth = (req, res, next) => {
-    if (!req.session.user) return res.status(401).json({ message: "Unauthorized" });
-    next();
+  console.log("requireAuth - session:", req.session);
+  if (!req.session.user) return res.status(401).json({ message: "Unauthorized" });
+  next();
 };
 
 // User Registration Route
@@ -112,7 +113,20 @@ app.post("/api/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  req.session.user = { id: user.id, email: user.email, role: user.role, fullName: user.fullName };
+  req.session.user = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    fullName: user.fullName,
+    address1: user.address1,
+    address2: user.address2,
+    city: user.city,
+    state: user.state,
+    zip: user.zip,
+    skills: user.skills || [],
+    volunteerHistory: user.volunteerHistory || [],
+    notifications: user.notifications || [],
+  };
   console.log("Session set:", req.session); 
   res.json({ message: "Login successful", user: req.session.user });
 });
@@ -237,61 +251,53 @@ app.get("/api/profile/:id", (req, res) => {
 });
 
 // Update user profile
-app.put("/api/profile", (req, res) => {
-  const { userId } = req.session.user.id;
-
-  const { fullName, address1, address2, city, state, zipCode, skills, preferences, availability } = req.body;
-
-  if (!fullName) return res.status(400).json({ message: "Full name is required" });
-  if (!address1) return res.status(400).json({ message: "Address is required" });
-  if (!city) return res.status(400).json({ message: "City is required" });
-  if (!state) return res.status(400).json({ message: "State is required" });
-  if (!zipCode) return res.status(400).json({ message: "Zipcode is required" });
-  if (!skills) return res.status(400).json({ message: "Skills are required" });
-
-  const user = users.find((user) => user.id === userId);
-  if (user) {
-      user.fullName = fullName;
-      user.address1 = address1;
-      user.address2 = address2 || "";
-      user.city = city;
-      user.state = state;
-      user.zip = zipCode;
-      user.skills = skills;
-      user.preferences = preferences || "";
-      user.availability = availability || [];
-
-      return res.json({ message: "Profile updated successfully", profileData: user });
-  } else {
-      return res.status(404).json({ message: "User not found" });
-  }
-});
-
-//this is for creating data for a new profile
-app.post("/api/profile", (req, res) => {
-  const { fullName, address1, address2, city, state, zipCode, skills, preferences, availability } = req.body;
-
-  if (!fullName || !address1 || !city || !state || !zipCode || !skills) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-  
-  const newUser = {
-    id: users.length + 1, 
+app.put("/api/profile", requireAuth, (req, res) => {
+  const userId = req.session.user ? req.session.user.id : null;
+  const {
     fullName,
     address1,
-    address2: address2 || "",
+    address2,
     city,
     state,
-    zipCode,
+    zipCode, 
     skills,
-    preferences: preferences || "",
-    availability: availability || [],
+    preferences,
+    availability,
+  } = req.body;
+
+  const user = users.find((user) => user.id === userId);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  // Update only provided fields, keeping existing values if not sent
+  user.fullName = fullName !== undefined ? fullName : user.fullName;
+  user.address1 = address1 !== undefined ? address1 : user.address1;
+  user.address2 = address2 !== undefined ? address2 : user.address2 || "";
+  user.city = city !== undefined ? city : user.city || "";
+  user.state = state !== undefined ? state : user.state || "";
+  user.zip = zipCode !== undefined ? zipCode : user.zip || ""; 
+  user.skills = skills !== undefined ? skills : user.skills || [];
+  user.preferences = preferences !== undefined ? preferences : user.preferences || "";
+  user.availability = availability !== undefined ? availability : user.availability || [];
+
+   // Sync session with updated user data
+  req.session.user = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    fullName: user.fullName,
+    address1: user.address1,
+    address2: user.address2,
+    city: user.city,
+    state: user.state,
+    zip: user.zip,
+    skills: user.skills || [],
+    volunteerHistory: user.volunteerHistory || [],
+    notifications: user.notifications || [],
   };
 
-  users.push(newUser);  // Save the new user
-
-  res.status(201).json({ message: "User profile created", user: newUser });
+  return res.json({ message: "Profile updated successfully", profileData: user });
 });
 
 
