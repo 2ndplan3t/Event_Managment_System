@@ -158,14 +158,11 @@ app.get("/api/volunteer-history/:id", (req, res) => {
 //add a volunteer event to a user's history
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
-  const { event, eventdesc, location, date, status } = req.body;
+  const { event, location, date, status } = req.body;
 
-  if (!fullName){return res.status(400).json({ message: "Full name is required" });}
-  if (!address1){return res.status(400).json({ message: "Address is required" });}
-  if (!city){return res.status(400).json({ message: "City is required" });}
-  if (!state){return res.status(400).json({ message: "State is required" });}
-  if (!zipCode){return res.status(400).json({ message: "Zipcode is required" });}
-  if (!skills){return res.status(400).json({ message: "Skills are required" });}
+  if (!event?.trim() || !location?.trim() || !date?.trim() || !status?.trim()) {
+      return res.status(400).json({ message: "All event details are required" });
+  }
 
   const user = users.find((u) => u.id === userId);
 
@@ -177,10 +174,11 @@ app.post("/api/volunteer-history/:id", (req, res) => {
       user.volunteerHistory = [];
   }
 
-  user.volunteerHistory.push({ event, eventdesc, location, date, status });
+  user.volunteerHistory.push({ event, location, date, status });
 
   res.json({ message: "Volunteer history updated successfully", volunteerHistory: user.volunteerHistory });
 });
+
 
 //delete volunteer event from a user's history
 app.delete("/api/volunteer-history/:id/:eventIndex", (req, res) => {
@@ -200,6 +198,9 @@ app.delete("/api/volunteer-history/:id/:eventIndex", (req, res) => {
   res.json({ message: "Volunteer event removed successfully", volunteerHistory: user.volunteerHistory });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+module.exports = { app, users };
