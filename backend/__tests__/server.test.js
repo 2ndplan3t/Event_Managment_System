@@ -47,6 +47,50 @@ describe("POST /api/register", () => {
   });
 });
 
+// Test GET /api/users/:id to fetch notifications
+describe('GET /api/users/:id', () => {
+  it('should return the user object when a valid user id is provided', async () => {
+    // Assuming you have some sample users array with IDs
+    const response = await request(app).get('/api/users/3'); // Example with user ID 1
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('id', 3);
+    expect(response.body).toHaveProperty('notifications');
+  });
+
+  it('should return a 404 error when user is not found', async () => {
+    const response = await request(app).get('/api/users/999'); // Example with a non-existent user ID
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('User not found');
+  });
+});
+
+// Test PUT /api/users/:id to edit user notifications
+describe('PUT /api/users/:id', () => {
+  it('should update user notifications successfully when a valid user id is provided', async () => {
+    const newNotifs = ['new_notification_1', 'new_notification_2'];
+
+    const response = await request(app)
+      .put('/api/users/1') // Example with user ID 1
+      .send(newNotifs); // Sending new notifications array
+
+    expect(response.status).toBe(200);
+    expect(response.body.notifications).toEqual(newNotifs);
+  });
+
+  it('should return a 404 error when user is not found', async () => {
+    const newNotifs = ['new_notification_1', 'new_notification_2'];
+
+    const response = await request(app)
+      .put('/api/users/999') // Example with a non-existent user ID
+      .send(newNotifs);
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('User not found');
+  });
+});
+
 describe('POST /api/login', () => {
   beforeEach(async () => {
     // Make sure we log out before running the test
@@ -430,10 +474,6 @@ describe("GET /api/events", () => {
     expect(response.body).toEqual([]);
   });
 });
-
-
-
-
 
 
 describe("GET /api/volunteers", () => {

@@ -163,8 +163,6 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-
-
 app.post("/api/logout", (req, res) => {
 
     res.clearCookie("connect.sid"); 
@@ -237,7 +235,7 @@ app.get("/api/users/:id", (req, res) => {
     res.json(userAcc);
   }
   else{
-    res.status(404).json({ message: "No user found - how did you get here?" });
+    res.status(404).json({ message: "User not found" });
   }
 });
 
