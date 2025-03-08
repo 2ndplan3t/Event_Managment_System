@@ -40,7 +40,7 @@ body {
     gap: 15px; 
   }
 
-  .contact-info, .login, .signin, .donation-bar {
+  .contact-info, .profile, .logout, .login, .signin, .donation-bar {
     width: 300px;
     margin-bottom: 10px;
     align-items: baseline;

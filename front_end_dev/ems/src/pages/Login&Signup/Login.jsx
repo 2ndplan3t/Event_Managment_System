@@ -1,9 +1,9 @@
-import React, { useState, useEffect  } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Login.css'; 
 import Home from '../FrontPage/home';
-function Login() {
 
+function Login() {
   const location = useLocation();
   const [isSignUp, setIsSignUp] = useState(location.state?.signup || false);
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -11,42 +11,29 @@ function Login() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
-//temp admin and volunteer accounts
-//logging in will redirect to the admin/volunteer user profile pages
-  const adminCredentials = {
-    email: 'admin@example.com',
-    password: 'admin_123',
-  };
-
-  const volunteerCredentials = {
-    email: 'volunteer@example.com',
-    password: 'volunteer_123',
-  };
-//closing login/signup will redirect to the homepage
+  // Closing login/signup will redirect to the homepage
   const closeModal = () => {
-    setIsModalOpen(false); 
-    navigate('/'); 
+    setIsModalOpen(false);
+    navigate('/');
   };
- //alternative to clicking 'x' to exit out:
- //click outside the login/signup box or press escape to go back to the home page 
+
   const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {  
+    if (e.target === e.currentTarget) {
       closeModal();
     }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
-      closeModal(); 
+      closeModal();
     }
   };
 
   const passwordValidation = (password) => {
-    // the password has at least 8 characters and contains at least one number
-    const lengthCondition = /.{8,}/;  
-    const numberCondition = /\d/;     
+    const lengthCondition = /.{8,}/;
+    const numberCondition = /\d/;
 
     if (!lengthCondition.test(password)) {
       return 'Password must be at least 8 characters long';
@@ -54,8 +41,9 @@ function Login() {
     if (!numberCondition.test(password)) {
       return 'Password must contain at least one number';
     }
-    return '';  
+    return '';
   };
+
   const handleTabSwitch = (isSignUp) => {
     setIsSignUp(isSignUp);
     setEmail('');
@@ -64,10 +52,9 @@ function Login() {
     setError('');
   };
 
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');  
+    setError("");
 
     if (isSignUp) {
       const passwordError = passwordValidation(password);
@@ -76,52 +63,82 @@ function Login() {
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match');
-      } else {
-        
-        console.log('Signing up with', email, password);
+        setError("Passwords do not match");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include', 
+          body: JSON.stringify({
+            fullName: email.split("@")[0],
+            email,
+            password,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Registration failed");
+        }
+
+        const data = await response.json();
+        console.log("Registration successful:", data);
+        alert("Sign-up successful! You can now log in.");
+        setIsSignUp(false);
+      } catch (error) {
+        setError("Registration failed. Email may already be in use.");
+        console.error("Sign-up error:", error);
       }
     } else {
-      // Check if it's a temp admin/user login
-      if (email === adminCredentials.email && password === adminCredentials.password) {
-        //redirect to admin user profile page
-        navigate('/admin'); 
-      }if (email === volunteerCredentials.email && password === volunteerCredentials.password){
-        //redirect to volunteer user profile page
-        navigate('/user');
-      
-      } else if (!email || !password) {
-        setError('Please fill in both fields');
-      } else {
-        // Validate temp login...
-        console.log('Logging in with', email, password);
+      if (!email || !password) {
+        setError("Please fill in both fields");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include', 
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Invalid email or password");
+        }
+
+        const data = await response.json();
+        console.log("Login successful:", data);
+
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        if (data.user.role === "admin") {
+          localStorage.setItem("adminId", data.user.id);
+          navigate("/admin");
+        } else if (data.user.role === "volunteer") {
+          navigate("/user");
+        } else {
+          navigate("/");
+        }
+      } catch (error) {
+        setError("Invalid email or password");
+        console.error("Login error:", error);
       }
     }
   };
 
-  useEffect(() => {
-    setIsSignUp(location.pathname === '/signup');
-    
-    if (isModalOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [location, isModalOpen]);
-
   return (
     <>
-    <Home />
+      <Home />
       {isModalOpen && (
-        <div className="modal-overlay" onClick={handleOverlayClick}>
+        <div className="modal-overlay" onClick={handleOverlayClick} onKeyDown={handleKeyDown} tabIndex={0}>
           <div className="log-in-container">
             <div className="login-form-container">
               <button className="login-close-btn" onClick={closeModal}>×</button>
 
-              {/* toggle buttons for Login/SignUp */}
-              <div className="login-form-toggle">
+              <div className="login-form-toggle" data-testid="login-form-toggle">
                 <button
                   className={isSignUp ? '' : 'active'}
                   onClick={() => handleTabSwitch(false)}
@@ -136,23 +153,24 @@ function Login() {
                 </button>
               </div>
 
-              <form className="login-form" onSubmit={handleSubmit}>
+              <form className="login-form" onSubmit={handleSubmit} data-testid="login-form">
                 <h2>{isSignUp ? 'Sign Up' : 'Login'}</h2>
 
                 <input
-                 type="email"
-                 placeholder="Email"
-                 value={email}
-                 onChange={(e) => setEmail(e.target.value)}
-                 required 
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
 
-                <input 
-                 type="password" 
-                 placeholder="Password"
-                 value={password} 
-                 onChange={(e) => setPassword(e.target.value)}
-                 required />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
 
                 {isSignUp && (
                   <input
