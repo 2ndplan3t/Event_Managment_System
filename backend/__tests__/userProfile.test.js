@@ -1,21 +1,5 @@
 const request = require("supertest");
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
-
-
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// Hardcoded admin and volunteer profiles
-const users = [
-  { id: 1, email: "admin@example.com", password: "admin_123", role: "admin", fullName: "Admin" },
-  { id: 2, email: "johndoe@gmail.com", password: "admin_123", role: "admin", fullName: "John Doe" },
-  { id: 3, email: "charlie@example.com", password: "volunteer_123", role: "volunteer", fullName: "Charlie", skills: ["First Aid", "Security"], volunteerHistory: [], notifications: [] },
-  { id: 4, email: "alice@example.com", password: "volunteer_123", role: "volunteer", fullName: "Alice", skills: ["First Aid", "Logistics"], volunteerHistory: [{ event: "Charity Run", location: "18427 Southwest Fwy, Sugar Land, TX 77479", date: "2024-06-15", status: "Completed" }], notifications: [] }
-];
+const { app, users } = require('../server');
 
 
 app.put("/api/user/:id", (req, res) => {
@@ -135,4 +119,3 @@ app.put("/api/user/:id", (req, res) => {
       expect(response.body.message).toBe("City is required");
     });
   });
-

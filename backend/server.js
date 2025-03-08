@@ -432,6 +432,10 @@ app.put("/api/profile", requireAuth, (req, res) => {
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
 
+  const user = users.find((u) => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
 
   const { event, eventdesc, location, date, status, fullName, address1, city, state, zipCode, skills } = req.body;
 
@@ -441,16 +445,8 @@ app.post("/api/volunteer-history/:id", (req, res) => {
   if (!state) return res.status(400).json({ message: "State is required" });
   if (!zipCode) return res.status(400).json({ message: "Zipcode is required" });
   if (!skills) return res.status(400).json({ message: "Skills are required" });
-  
 
-  const user = users.find((u) => u.id === userId);
-  //console.log("POST /volunteer-history - Found user:", user);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-
-
+  // Add the event to the user's volunteer history
   user.volunteerHistory.push({
     event,
     eventdesc,
