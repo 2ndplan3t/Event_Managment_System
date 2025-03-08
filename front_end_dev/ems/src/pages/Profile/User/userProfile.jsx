@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import './UserProfile.css';
 
-function UserProfile({ onSubmit }) {
+function UserProfile({ userId,onSubmit }) {
     const [formData, setFormData] = useState({
         fullName: "",
         address1: "",
@@ -25,6 +25,7 @@ function UserProfile({ onSubmit }) {
         "First-Aid", "Animal Handling", "Cooking", "Sewing", "Communication", "Fundraising"
     ];
 
+    
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prevState => {
@@ -38,9 +39,27 @@ function UserProfile({ onSubmit }) {
         });
     };
 
+    
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(formData); // pass data to parent component
+        // Send POST request to backend to save data
+        fetch(`http://localhost:5000/api/profile/${userId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData), //send form data
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.errors) {
+                console.log(data.errors);
+            } else {
+                onSubmit(data.user);
+            }
+        })
+        .catch((error) => console.error("Error saving user profile:", error));
     };
 
     const toggleDropdown = () => {
