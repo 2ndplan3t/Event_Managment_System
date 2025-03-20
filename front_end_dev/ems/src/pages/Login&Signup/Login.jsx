@@ -84,6 +84,7 @@ function Login() {
         }
 
         const data = await response.json();
+        
         console.log("Registration successful:", data);
         alert("Sign-up successful! You can now log in.");
         setIsSignUp(false);
@@ -110,14 +111,16 @@ function Login() {
         }
 
         const data = await response.json();
+        
         console.log("Login successful:", data);
+        console.log("User ID from login:", data.user.id);
 
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        if (data.user.role === "admin") {
+        if (data.user.role === "Manager") {
           localStorage.setItem("adminId", data.user.id);
           navigate("/admin");
-        } else if (data.user.role === "volunteer") {
+        } else if (data.user.role === "Volunteer") {
           navigate("/user");
         } else {
           navigate("/");

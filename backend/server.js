@@ -3,7 +3,7 @@ const session = require("express-session");
 const cors = require("cors");
 const bcrypt = require('bcrypt');
 require("dotenv").config();
-
+const db = require('./db');
 const app = express();
 const PORT = 5000;
 
@@ -101,67 +101,130 @@ const requireAuth = (req, res, next) => {
 /* istanbul ignore end */
 
 // User Registration Route
-app.post("/api/register", async (req, res) => {
-    try {
-        const { fullName, email, password, role = "volunteer", skills = [] } = req.body;
-        if (users.some(user => user.email === email)) return res.status(400).json({ message: "Email already in use." });
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { id: users.length + 1, email, password: hashedPassword, role, fullName, skills };
-        users.push(newUser);
-        res.status(201).json({ message: "Registration successful" });
-    } catch (error) {
-      /* istanbul ignore next */
-        console.error("Registration error:", error);
-        /* istanbul ignore next */
-        res.status(500).json({ message: "Internal server error" });
-    }
+app.post("/api/register", (req, res) => {
+  const { fullName, email, password, role = "Volunteer", skills = [] } = req.body;
+
+  // input validation
+  if (!fullName || !email || !password) {
+      return res.status(400).json({ message: "Full name, email, and password are required" });
+  }
+
+  if (!["Volunteer", "Manager"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role. Must be 'Volunteer' or 'Manager'" });
+  }
+
+  // hashy
+  bcrypt.hash(password, 10, (err, hashedPassword) => {
+      if (err) {
+          console.error("Error hashing password:", err);
+          return res.status(500).json({ message: "Internal server error" });
+      }
+
+      // insert into LoginInfo
+      db.query(
+          `INSERT INTO LoginInfo (Email, UserPass, UserRole) VALUES (?, ?, ?)`,
+          [email, hashedPassword, role],
+          (err, loginResult) => {
+              if (err) {
+                  if (err.code === "ER_DUP_ENTRY") {
+                      return res.status(400).json({ message: "Email already in use" });
+                  }
+                  console.error("Error inserting into LoginInfo:", err);
+                  return res.status(500).json({ message: "Internal server error" });
+              }
+
+              const userID = loginResult.insertId;
+
+              // insert into UserProfile
+              db.query(
+                  `INSERT INTO UserProfile (UserID, FullName) VALUES (?, ?)`,
+                  [userID, fullName],
+                  (err) => {
+                      if (err) {
+                          console.error("Error inserting into UserProfile:", err);
+                          // Rollback LoginInfo insert if UserProfile fails
+                          db.query("DELETE FROM LoginInfo WHERE UserID = ?", [userID]);
+                          return res.status(500).json({ message: "Internal server error" });
+                      }
+                      res.status(201).json({ message: "Registration successful" });
+                  }
+              );
+          }
+      );
+  });
 });
 
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
 
-  // password presence
-  if (!password) {
-    return res.status(400).json({ message: "Password is required" });
-  }
+app.post("/api/login", (req, res) => {
+    const { email, password } = req.body;
 
-  if (!email){
-    return res.status(400).json({ message: "Email is required" });
-  }
-
-  const user = users.find((u) => u.email === email); 
-
-  // Check if the password is valid
-  try {
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Set session with user data
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName,
-      address1: user.address1,
-      address2: user.address2,
-      city: user.city,
-      state: user.state,
-      zip: user.zip,
-      skills: user.skills || [],
-      volunteerHistory: user.volunteerHistory || [],
-      notifications: user.notifications || [],
-    };
+    db.query(
+        `SELECT li.UserID, li.UserPass, li.UserRole, li.Email,
+                up.FullName, up.AddressLine, up.AddressLine2,
+                up.City, up.State, up.ZipCode
+         FROM LoginInfo li
+         LEFT JOIN UserProfile up ON li.UserID = up.UserID
+         WHERE li.Email = ?`,
+        [email],
+        (err, userRows) => {
+            if (err) {
+                console.error("Query error:", err);
+                return res.status(500).json({ message: "Internal server error" });
+            }
 
-    res.json({ message: "Login successful", user: req.session.user });
-  } catch (error) {
-    /* istanbul ignore next */
-    //console.error("Error during password comparison:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+            if (!userRows || userRows.length === 0) {
+                return res.status(401).json({ message: "Invalid email or password" });
+            }
+
+            const user = userRows[0];
+
+            bcrypt.compare(password, user.UserPass, (err, isMatch) => {
+                if (err) {
+                    console.error("Bcrypt error:", err);
+                    return res.status(500).json({ message: "Internal server error" });
+                }
+
+                if (!isMatch) {
+                    return res.status(401).json({ message: "Invalid email or password" });
+                }
+
+                // Set session data
+                req.session.user = {
+                    id: user.UserID,
+                    email: user.Email,
+                    role: user.UserRole,
+                    fullName: user.FullName || '',
+                    address: {
+                        line1: user.AddressLine || '',
+                        line2: user.AddressLine2 || '',
+                        city: user.City || '',
+                        state: user.State || '',
+                        zip: user.ZipCode || ''
+                    }
+                };
+
+                console.log("Logged in user ID:", user.UserID); // Debug
+                console.log("Session after login:", req.session.user); // Debug
+
+                res.json({
+                    message: "Login successful",
+                    user: {
+                        id: req.session.user.id,
+                        email: req.session.user.email,
+                        role: req.session.user.role,
+                        fullName: req.session.user.fullName
+                    }
+                });
+            });
+        }
+    );
 });
+
+
 
 app.post("/api/logout", (req, res) => {
 
@@ -172,15 +235,43 @@ app.post("/api/logout", (req, res) => {
 
 app.get("/api/admin/profile", requireAuth, (req, res) => {
   const user = req.session.user;
-  if (user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied: Admins only" });
+
+  if (user.role !== "Manager") { // Matches your ENUM
+      return res.status(403).json({ message: "Access denied: Admins only" });
   }
-  res.json({
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName,
-    role: user.role,
-  });
+
+  console.log("Fetching profile for user ID:", user.id); // Debug
+
+  db.query(
+      `SELECT li.UserID, li.Email, li.UserRole, 
+              up.FullName, up.AddressLine, up.AddressLine2, 
+              up.City, up.State, up.ZipCode
+       FROM LoginInfo li
+       LEFT JOIN UserProfile up ON li.UserID = up.UserID
+       WHERE li.UserID = ?`,
+      [user.id],
+      (err, userRows) => {
+          if (err) {
+              console.error("Query error:", err);
+              return res.status(500).json({ message: "Internal server error" });
+          }
+
+          if (!userRows || userRows.length === 0) {
+              return res.status(404).json({ message: "User not found" });
+          }
+
+          const dbUser = userRows[0];
+
+          console.log("Database user ID:", dbUser.UserID); // Debug
+
+          res.json({
+              id: dbUser.UserID,
+              email: dbUser.Email,
+              fullName: dbUser.FullName || '',
+              role: dbUser.UserRole
+          });
+      }
+  );
 });
 
 app.get("/api/profile", (req, res) => {
@@ -495,4 +586,4 @@ if (require.main === module) {
   app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
 }
 
-module.exports = { events, app, users };
+module.exports = { events, app, users, db };
