@@ -66,7 +66,7 @@ const requireAuth = (req, res, next) => {
 
 // User Registration Route
 app.post("/api/register", (req, res) => {
-  const { fullName, email, password, role = "Volunteer"} = req.body;
+  const { email, password, role = "Volunteer"} = req.body;
 
   // hashy
   bcrypt.hash(password, 10, (err, hashedPassword) => {
@@ -92,7 +92,7 @@ app.post("/api/register", (req, res) => {
 
               // insert into UserProfile
               db.query(
-                  `INSERT INTO UserProfile (UserID) VALUES (?, ?)`,
+                  `INSERT INTO UserProfile (UserID) VALUES (?)`,
                   [userID],
                   (err) => {
                       if (err) {
@@ -101,7 +101,30 @@ app.post("/api/register", (req, res) => {
                           db.query("DELETE FROM LoginInfo WHERE UserID = ?", [userID]);
                           return res.status(500).json({ message: "Internal server error" });
                       }
-                      res.status(201).json({ message: "Registration successful" });
+                    // Manually set the session for the newly registered user
+                    req.session.user = {
+                      id: userID,
+                      email: email,
+                      role: role,
+                      fullName: '',
+                      address: {
+                        line1: '',
+                        line2: '',
+                        city: '',
+                        state: '',
+                        zip: ''
+                      }
+                    };
+
+                    res.status(201).json({
+                      message: "Registration successful",
+                      user: {
+                        id: req.session.user.id,
+                        email: req.session.user.email,
+                        role: req.session.user.role,
+                        fullName: req.session.user.fullName
+                      }
+                    });
                   }
               );
           }
@@ -110,7 +133,9 @@ app.post("/api/register", (req, res) => {
 });
 
 
-app.post("/api/login", (req, res) => {
+app.post("/api/login", async(req, res) => {
+    await fetchUsers();
+    console.log(users);
     const { email, password } = req.body;
 
     if (!email) {
@@ -308,25 +333,7 @@ const matchVolunteers = (event) => {
   );
 };
 
-// Create a new event
-const event_num = 0;
-app.post('/api/events', (req, res) => {
-  const { name, location, envoy, requiredSkills, urgencyLevel, date, manager, matchedVolunteers } = req.body;
-  const newEvent = {
-    id: event_num+1,
-    name,
-    location,
-    envoy,
-    requiredSkills,
-    urgencyLevel,
-    date,
-    manager,
-    matchedVolunteers,
-    selectedVolunteers: [],
-  };
-  events.push(newEvent);
-  res.status(201).json(newEvent);
-});
+
 
 // Get all events
 app.get('/api/events', (req, res) => {
@@ -440,7 +447,10 @@ app.get("/api/profile/:id", (req, res) => {
         const fullResult = {
           userProfile: userProfile,
           skills: userSkills.map(skill => skill.SkillName),
-          availability: userAvailability.map(avail => avail.DateAvail)
+          availability: userAvailability.map(avail => {
+            const date = new Date(avail.DateAvail);
+            return date.toLocaleDateString(); // This will return the date in a "MM/DD/YYYY" format
+          })
         }
         res.json(fullResult);
       })

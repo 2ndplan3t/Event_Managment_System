@@ -31,6 +31,10 @@ function ProfilePage() {
 
     const handleFormSubmit = (data) => {
         setProfileData(data);
+        setTimeout(() => {
+            // After form submission, refresh the page
+            window.location.reload();
+        }, 500);
     };
 
     return (
