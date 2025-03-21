@@ -62,7 +62,7 @@ function Home() {
               // Logged-in header
               <>
                 <div className="profile">
-                  <Link to={user.role === "admin" ? "/admin" : "/user"}>
+                  <Link to={user.role === "Manager" ? "/admin" : "/user"}>
                     <button>Profile</button>
                   </Link>
                 </div>
