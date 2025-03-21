@@ -1,9 +1,10 @@
 const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
+const {db} = require("./db")
 const bcrypt = require('bcrypt');
 require("dotenv").config();
-const db = require('./db');
+
 const app = express();
 const PORT = 5000;
 
@@ -20,6 +21,39 @@ app.use(
     cookie: { secure: false, httpOnly: true, maxAge: 3600000 },
   })
 );
+
+
+var users;
+// Get all the users from the database
+async function fetchUsers() {
+  try {
+      users = await new Promise((resolve, reject) => {
+          db.query("SELECT * FROM logininfo", function(err, result) {
+              if (err) reject(err);  // Reject if issue
+              else resolve(result);   // Resolve if success
+          });
+      });
+
+      console.log("Users fetched from database successfully.");  // Users was successfully gotten
+      users = users.map(user => ({ ...user }));
+
+  } catch (error) {
+      console.error('Error fetching users:', error);
+  }
+}
+
+
+// ALL LOGIN STUFF
+/* istanbul ignore start */
+const hashPasswords = async () => {
+  for (let user of users) {
+      if (!user.password.startsWith("$2b$")) {  // Check if not already hashed
+          const hashedPassword = await bcrypt.hash(user.password, 10);
+          user.password = hashedPassword;
+      }
+  }
+};
+/* istanbul ignore end */
 
 /* istanbul ignore start */
 const requireAuth = (req, res, next) => {
@@ -58,8 +92,8 @@ app.post("/api/register", (req, res) => {
 
               // insert into UserProfile
               db.query(
-                  `INSERT INTO UserProfile (UserID, FullName) VALUES (?, ?)`,
-                  [userID, fullName],
+                  `INSERT INTO UserProfile (UserID) VALUES (?, ?)`,
+                  [userID],
                   (err) => {
                       if (err) {
                           console.error("Error inserting into UserProfile:", err);
@@ -103,7 +137,7 @@ app.post("/api/login", (req, res) => {
             if (!userRows || userRows.length === 0) {
                 return res.status(401).json({ message: "Invalid credentials" });
             }
-
+            console.log(userRows);
             const user = userRows[0];
 
             bcrypt.compare(password, user.UserPass, (err, isMatch) => {
@@ -131,7 +165,6 @@ app.post("/api/login", (req, res) => {
                     }
                 };
 
-
                 res.status(200).json({
                     message: "Login successful",
                     user: {
@@ -155,7 +188,7 @@ app.post("/api/logout", (req, res) => {
     //console.log("Logout successful, session destroyed");
 });
 
-app.get("/api/admin/profile", requireAuth, (req, res) => {
+app.get("/api/admin/profile", (req, res) => {
   const user = req.session.user;
 
   if (user.role !== "Manager") { // Matches your ENUM
@@ -212,7 +245,7 @@ app.get("/", (req, res) => {
 // Testing backend connection
 app.get("/api/test", (req, res) => {
     res.json({ message: "Backend is working" });
-});
+  });
 
 // get the users list
 app.get("/api/users", (req, res) => {
@@ -243,7 +276,7 @@ app.put('/api/events/:id', async(req, res) =>{
 
 // get notifications from the user
 app.get("/api/users/:id", (req, res) => {
-  const userAcc = users.find((user) => user.id === parseInt(req.params.id));
+  const userAcc = users.find((user) => user.UserID === parseInt(req.params.id));
   if(userAcc){
     res.json(userAcc);
   }
@@ -252,59 +285,54 @@ app.get("/api/users/:id", (req, res) => {
   }
 });
 
-// Edit user's notifications
-app.put("/api/users/:id", async(req, res) =>{
-  const userId = parseInt(req.params.id, 10);
-  const newNotifs = req.body;
-  const userIndex = users.findIndex((user) => user.id === userId);
-  
-  // if user cannot be found
-  if (userIndex === -1) {
-    return res.status(404).json({ message: 'User not found' });  // Return a 404 if the user does not exist
+// route to get admin profile/event management page
+app.get("/api/admin/:id", (req, res) => {
+  const admin = users.find((user) => user.id === parseInt(req.params.id) && user.role === "admin");
+  if (admin) {
+      res.json(admin);
+  } else {
+      res.status(404).json({ message: "Admin not found" });
   }
-  
-  // otherwise, we update the user
-  const updatedUser = {
-    ...users[userIndex],
-    notifications: newNotifs
-  };
+}); 
 
-  users[userIndex] = updatedUser;
-  return res.status(200).json(updatedUser);
-});
 
 let events = [];
 
-// Match volunteers with event required skills
+
+// match volunteers with event required skills
 const matchVolunteers = (event) => {
-    const volunteers = users.filter(user => user.role === "volunteer");
-    return volunteers.filter((volunteer) =>
-        volunteer.skills.some((skill) => event.requiredSkills.includes(skill))
-    );
+  const volunteers = users.filter(user => user.role === "volunteer");
+
+  return volunteers.filter((volunteer) =>
+    volunteer.skills.some((skill) => event.requiredSkills.includes(skill))
+  );
 };
 
+// Create a new event
 const event_num = 0;
 app.post('/api/events', (req, res) => {
-  
-    const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
-    if (!name || !location || !envoy || !requiredSkills || !urgencyLevel || !date || !manager) {
-      return res.status(400).json({ message: 'Required fields are missing' });
-    }
-    const newEvent = {
-        id: events.length + 1,
-        name,
-        location,
-        envoy,
-        requiredSkills,
-        urgencyLevel,
-        date,
-        manager,
-        matchedVolunteers: [],
-        selectedVolunteers: [],
-    };
-    events.push(newEvent);
-    res.status(201).json(newEvent);
+  const { name, location, envoy, requiredSkills, urgencyLevel, date, manager, matchedVolunteers } = req.body;
+  const newEvent = {
+    id: event_num+1,
+    name,
+    location,
+    envoy,
+    requiredSkills,
+    urgencyLevel,
+    date,
+    manager,
+    matchedVolunteers,
+    selectedVolunteers: [],
+  };
+  events.push(newEvent);
+  res.status(201).json(newEvent);
 });
+
+// Get all events
+app.get('/api/events', (req, res) => {
+  res.json(events);
+});
+
 // Edit the event's selected users
 app.put('/api/events/:id', async(req, res) =>{
   const eventId = parseInt(req.params.id, 10);
@@ -326,44 +354,40 @@ app.put('/api/events/:id', async(req, res) =>{
   return res.status(200).json(updatedEvent);
 });
 
-
-app.get('/api/events', (req, res) => {
-    //console.log(events);
-    res.json(events);
-});
-
+// Delete an event
 app.delete('/api/events/:id', (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  //console.log(`Deleting event with ID: ${eventId}`);
-  
-  // Find if the event exists before filtering
-  const eventExists = events.some(event => event.id === eventId);
-  //console.log('Events before deletion:', events)
-  if (!eventExists) {
-    return res.status(404).json({ message: 'Event not found' });
-  }
-  
+  console.log(`Deleting event with ID: ${eventId}`);
   events = events.filter((event) => event.id !== eventId);
-  //console.log('Updated events:', events);
+  console.log('Updated events:', events);
   res.status(200).json({ message: 'Event deleted successfully.' });
 });
 
-
-app.get('/api/volunteers', (req, res) => {
-    const volunteers = users.filter(user => user.role === 'Volunteer');
-    res.json(volunteers);
+// Create a new volunteer
+app.post('/api/volunteers', (req, res) => {
+  const { name, skills } = req.body;
+  const newVolunteer = {
+    id: volunteers.length + 1,
+    name,
+    skills,
+  };
+  volunteers.push(newVolunteer);
+  res.status(201).json(newVolunteer);
 });
 
+// Get all volunteers
+app.get('/api/volunteers', (req, res) => {
+  const volunteers = users.filter(user => user.role === 'volunteer');
+  res.json(volunteers);
+});
 
+// Match volunteers to an event
 app.post('/api/events/match-volunteers/:eventId', (req, res) => {
   const eventId = parseInt(req.params.eventId, 10);
-  console.log('Event ID:', eventId); // Debug: Log the eventId
-  console.log('Events in server:', events); // Debug: Log the events array
-
-  const event = events.find(e => e.id === eventId);
+  const event = events.find((e) => e.id === eventId);
 
   if (!event) {
-    return res.status(404).json({ message: "Event not found." });
+    return res.status(404).json({ message: 'Event not found.' });
   }
 
   const requiredSkills = event.requiredSkills;
@@ -378,32 +402,118 @@ app.post('/api/events/match-volunteers/:eventId', (req, res) => {
 //user profile management
 //get user profile by ID
 app.get("/api/profile/:id", (req, res) => {
-  const user = users.find((user) => user.id === parseInt(req.params.id));
+  const user = users.find((user) => user.UserID === parseInt(req.params.id));
   if (user) {
-    res.json(user);
+
+    // all three queries need to execute, be combined into one object, and then returned. yippee!
+    const userProfileQuery = new Promise((resolve, reject) => {
+      db.query("SELECT * FROM userprofile WHERE UserID = ?", [req.params.id], function(err, result) {
+        if(err) reject(err);
+        else{
+          resolve(result);
+        }
+      });
+    });
+
+    const skillsProfileQuery = new Promise((resolve, reject) => {
+      db.query("SELECT SkillName FROM userskills WHERE UserID = ?", [req.params.id], function(err, result){
+        if(err) reject(err);
+        else{
+          resolve(result);
+        }
+      });
+    });
+
+    const availabilityProfileQuery = new Promise((resolve, reject) => {
+      db.query("SELECT DateAvail FROM useravailability WHERE UserID = ?", [req.params.id], function(err, result){
+        if(err) reject(err);
+        else{
+          resolve(result);
+        }
+      });
+    });
+
+    // And now, we take everything, combine it together, panic?
+    Promise.all([userProfileQuery, skillsProfileQuery, availabilityProfileQuery])
+      .then((results) => {
+        const[userProfile, userSkills, userAvailability] = results;
+        const fullResult = {
+          userProfile: userProfile,
+          skills: userSkills.map(skill => skill.SkillName),
+          availability: userAvailability.map(avail => avail.DateAvail)
+        }
+        res.json(fullResult);
+      })
+      .catch((err) =>{
+        console.error("Error getting user profile: ", err);
+        res.status(500).json({error: "Server error"});
+      });
+  
   } else {
     /* istanbul ignore next */
     res.status(404).json({ message: "User not found" });
   }
 });
 
-// Update user profile
-app.put("/api/profile", requireAuth, (req, res) => {
+// Update user profile by id
+app.put("/api/profile/:id", (req, res) => {
   /* istanbul ignore next */
-  const userId = req.session.user ? req.session.user.id : null;
+  const userId = parseInt(req.params.id);
   const {
     fullName,
     address1,
     address2,
     city,
     state,
-    zipCode, 
+    zipCode,
+    preferences, 
     skills,
-    preferences,
     availability,
   } = req.body;
 
-  const user = users.find((user) => user.id === userId);
+  // first, insert this into the table
+  db.query("UPDATE userprofile SET FullName = ?, AddressLine = ?, AddressLine2 = ?, City = ?, State = ?, ZipCode = ?, Preferences = ? WHERE UserID = ?",
+        [fullName, address1, address2, city, state, zipCode, preferences, userId], function(err){
+          if(err) throw err;
+          else{
+            console.log("User profile updated");
+          }
+        });
+
+  // clear all skills from the user previously and put the new ones in the table
+  db.query("DELETE FROM userskills WHERE UserID = ?", [userId], function(err){
+    if(err) throw err;
+    else{
+      console.log(console.log("User skills reset"));
+    }
+  });
+
+  for(let skill of skills){
+    db.query("INSERT INTO userskills (UserID, SkillName) VALUES (?,?)", [userId, skill], function(err){
+      if(err) throw err;
+      else{
+        console.log("Inserted " + skill)
+      }
+    });
+  }
+
+  db.query("DELETE FROM useravailability WHERE UserID = ?", [userId], function(err){
+    if(err) throw err;
+    else{
+      console.log("User availability reset");
+    }
+  });
+
+  for(let avail of availability){
+    db.query("INSERT INTO useravailability (UserID, DateAvail) VALUES (?,?)", [userId, avail], function(err){
+      if(err) throw err;
+      else{
+        console.log("Inserted " + avail)
+      }
+    });
+  }
+
+  const user = users.find((user) => user.UserID === userId);
   /* istanbul ignore next */
   if (!user) {
     /* istanbul ignore next */
@@ -411,14 +521,14 @@ app.put("/api/profile", requireAuth, (req, res) => {
   }
 
   // Update only provided fields, keeping existing values if not sent
-  user.fullName = fullName !== undefined ? fullName : user.fullName;
-  user.address1 = address1 !== undefined ? address1 : user.address1;
-  user.address2 = address2 !== undefined ? address2 : user.address2 || "";
-  user.city = city !== undefined ? city : user.city || "";
-  user.state = state !== undefined ? state : user.state || "";
-  user.zip = zipCode !== undefined ? zipCode : user.zip || ""; 
+  user.FullName = fullName !== undefined ? fullName : user.FullName;
+  user.AddressLine = address1 !== undefined ? address1 : user.AddressLine;
+  user.AddressLine2 = address2 !== undefined ? address2 : user.AddressLine2 || "";
+  user.City = city !== undefined ? city : user.City || "";
+  user.State = state !== undefined ? state : user.State || "";
+  user.ZipCode = zipCode !== undefined ? zipCode : user.ZipCode || ""; 
+  user.Preferences = preferences !== undefined ? preferences : user.Preferences || "";
   user.skills = skills !== undefined ? skills : user.skills || [];
-  user.preferences = preferences !== undefined ? preferences : user.preferences || "";
   user.availability = availability !== undefined ? availability : user.availability || [];
 
    // Sync session with updated user data
@@ -426,12 +536,12 @@ app.put("/api/profile", requireAuth, (req, res) => {
     id: user.id,
     email: user.email,
     role: user.role,
-    fullName: user.fullName,
-    address1: user.address1,
-    address2: user.address2,
-    city: user.city,
-    state: user.state,
-    zip: user.zip,
+    FullName: user.FullName,
+    AddressLine: user.AddressLine,
+    AddressLine2: user.AddressLine2,
+    City: user.City,
+    State: user.State,
+    ZipCode: user.ZipCode,
     skills: user.skills || [],
     volunteerHistory: user.volunteerHistory || [],
     notifications: user.notifications || [],
@@ -502,10 +612,17 @@ app.get("/api/isLoggedIn", (req, res) => {
   return res.json({ loggedIn: false });
 });
 
+// get all data when the server is ran
+async function init() {
+  await fetchUsers(); 
+  console.log(users);
+}
+
 /* istanbul ignore next */
 if (require.main === module) {
   /* istanbul ignore next */
   app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  init();
 }
 
-module.exports = { events, app, db };
+module.exports = { events, app, users, db };
