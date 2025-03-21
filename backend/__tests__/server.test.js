@@ -208,7 +208,7 @@ describe("GET /api/isLoggedIn and PUT /api/profile", () => {
     expect(response.body.profileData).toMatchObject({
       id: 3,
       email: "charlie@example.com",
-      role: "volunteer",
+      role: "Volunteer",
       fullName: "Charlie Updated",
       address1: "456 Elm St",
       city: "New City",
@@ -281,7 +281,7 @@ describe("GET /api/admin/profile", () => {
       id: 1,
       email: "admin@example.com",
       fullName: "Admin",
-      role: "admin",
+      role: "Manager",
     });
   });
   
@@ -329,7 +329,7 @@ describe("GET /api/profile", () => {
       id: 1,
       email: "admin@example.com",
       fullName: "Admin",
-      role: "admin",
+      role: "Manager",
     });
   });
 
@@ -483,17 +483,17 @@ describe("GET /api/volunteers", () => {
   });
 
   it("should return all volunteers", async () => {
-    // Add some sample users with different roles
+    // Add some sample users
     users.push({
       id: 1,
       name: "John Doe",
-      role: "volunteer",
+      role: "Volunteer",
       skills: ["First Aid"]
     });
     users.push({
       id: 2,
       name: "Jane Doe",
-      role: "admin",
+      role: "Volunteer",
       skills: ["Leadership"]
     });
 
@@ -505,7 +505,7 @@ describe("GET /api/volunteers", () => {
     expect(response.body).toHaveLength(1); // Only 1 volunteer should be returned
     expect(response.body[0]).toMatchObject({
       name: "John Doe",
-      role: "volunteer",
+      role: "Volunteer",
       skills: ["First Aid"]
     });
   });
@@ -580,21 +580,21 @@ describe("POST /api/volunteer-history/:id", () => {
       id: 1,
       email: "admin@example.com",
       password: "$2b$10$...", // Replace with actual hash if needed
-      role: "admin",
+      role: "Manager",
       fullName: "Admin",
     },
     {
       id: 2,
       email: "johndoe@gmail.com",
       password: "$2b$10$...",
-      role: "admin",
+      role: "Manager",
       fullName: "John Doe",
     },
     {
       id: 3,
       email: "charlie@example.com",
       password: "$2b$10$...",
-      role: "volunteer",
+      role: "Manager",
       fullName: "Charlie",
       address1: "",
       address2: "",
@@ -853,21 +853,21 @@ describe("DELETE /api/volunteer-history/:id/:eventIndex", () => {
       id: 1,
       email: "admin@example.com",
       password: "$2b$10$...", // Placeholder hash
-      role: "admin",
+      role: "Manager",
       fullName: "Admin",
     },
     {
       id: 2,
       email: "johndoe@gmail.com",
       password: "$2b$10$...",
-      role: "admin",
+      role: "Manager",
       fullName: "John Doe",
     },
     {
       id: 3,
       email: "charlie@example.com",
       password: "$2b$10$...",
-      role: "volunteer",
+      role: "Volunteer",
       fullName: "Charlie",
       address1: "",
       address2: "",
@@ -890,7 +890,7 @@ describe("DELETE /api/volunteer-history/:id/:eventIndex", () => {
       id: 4,
       email: "alice@example.com",
       password: "$2b$10$...",
-      role: "volunteer",
+      role: "Volunteer",
       fullName: "Alice",
       address1: "",
       address2: "",

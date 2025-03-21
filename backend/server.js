@@ -26,17 +26,17 @@ const users = [
     { id: 1,
       email: "admin@example.com",
       password: "admin_123",
-      role:"admin",
+      role:"Manager",
       fullName:"Admin" },
     { id: 2, 
       email: "johndoe@gmail.com", 
       password: "admin_123", 
-      role:"admin", 
+      role:"Manager", 
       fullName:"John Doe" },
     { id: 3, 
       email: "charlie@example.com", 
       password: "volunteer_123", 
-      role:"volunteer", 
+      role:"Volunteer", 
       fullName: "Charlie Brown" ,
       address1:"1267 Main street",
       address2:"",
@@ -60,7 +60,7 @@ const users = [
     { id: 4, 
       email: "alice@example.com", 
       password: "volunteer_123", 
-      role:"volunteer", 
+      role:"Volunteer", 
       fullName: "Alice",
       address1:"",
       address2:"",
@@ -102,16 +102,7 @@ const requireAuth = (req, res, next) => {
 
 // User Registration Route
 app.post("/api/register", (req, res) => {
-  const { fullName, email, password, role = "Volunteer", skills = [] } = req.body;
-
-  // input validation
-  if (!fullName || !email || !password) {
-      return res.status(400).json({ message: "Full name, email, and password are required" });
-  }
-
-  if (!["Volunteer", "Manager"].includes(role)) {
-      return res.status(400).json({ message: "Invalid role. Must be 'Volunteer' or 'Manager'" });
-  }
+  const { fullName, email, password, role = "Volunteer"} = req.body;
 
   // hashy
   bcrypt.hash(password, 10, (err, hashedPassword) => {
@@ -127,7 +118,7 @@ app.post("/api/register", (req, res) => {
           (err, loginResult) => {
               if (err) {
                   if (err.code === "ER_DUP_ENTRY") {
-                      return res.status(400).json({ message: "Email already in use" });
+                      return res.status(400).json({ message: "Email already in use." });
                   }
                   console.error("Error inserting into LoginInfo:", err);
                   return res.status(500).json({ message: "Internal server error" });
@@ -158,8 +149,11 @@ app.post("/api/register", (req, res) => {
 app.post("/api/login", (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
+    if (!email) {
+        return res.status(400).json({ message: "Email is required"});
+    }
+    if(!password){
+        return res.status(400).json({ message: "Password is required"});
     }
 
     db.query(
@@ -177,7 +171,7 @@ app.post("/api/login", (req, res) => {
             }
 
             if (!userRows || userRows.length === 0) {
-                return res.status(401).json({ message: "Invalid email or password" });
+                return res.status(401).json({ message: "Invalid credentials" });
             }
 
             const user = userRows[0];
@@ -189,7 +183,7 @@ app.post("/api/login", (req, res) => {
                 }
 
                 if (!isMatch) {
-                    return res.status(401).json({ message: "Invalid email or password" });
+                    return res.status(401).json({ message: "Invalid credentials" });
                 }
 
                 // Set session data
@@ -207,10 +201,8 @@ app.post("/api/login", (req, res) => {
                     }
                 };
 
-                console.log("Logged in user ID:", user.UserID); // Debug
-                console.log("Session after login:", req.session.user); // Debug
 
-                res.json({
+                res.status(200).json({
                     message: "Login successful",
                     user: {
                         id: req.session.user.id,
@@ -428,7 +420,7 @@ app.delete('/api/events/:id', (req, res) => {
 
 
 app.get('/api/volunteers', (req, res) => {
-    const volunteers = users.filter(user => user.role === 'volunteer');
+    const volunteers = users.filter(user => user.role === 'Volunteer');
     res.json(volunteers);
 });
 

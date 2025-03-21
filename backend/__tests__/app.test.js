@@ -11,12 +11,10 @@ describe("Express App", () => {
     // Starting the app
     server = app.listen(3000);
     
-    // Create a user for testing purposes
-    testUser = { email: "testuser@example.com", password: "testpass123", role: "volunteer" };
+    //existing user in database
+    testUser = { email: "alice@example.com", password: "volunteer_123" };
     
-    // Hash password for testUser
-    const hashedPassword = await bcrypt.hash(testUser.password, 10);
-    users.push({ id: users.length + 1, email: testUser.email, password: hashedPassword, role: testUser.role, fullName: "Test User" });
+
   });
 
   afterAll(() => {
@@ -32,7 +30,7 @@ describe("Express App", () => {
         fullName: "New User",
         email: "newuser@example.com",
         password: "newpass123",
-        role: "volunteer",
+        role: "Volunteer",
       });
 
     expect(response.status).toBe(201);
@@ -40,7 +38,7 @@ describe("Express App", () => {
   });
 
   // Test case for login
-  it("should log in an existing user", async () => {
+  it("should log in an existing user", async () => {  
     const response = await request(app)
       .post("/api/login")
       .send({ email: testUser.email, password: testUser.password });
