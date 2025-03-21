@@ -22,6 +22,7 @@ app.use(
 );
 
 // Hardcoded admin and volunteer profiles
+/*
 const users = [
     { id: 1,
       email: "admin@example.com",
@@ -77,7 +78,9 @@ const users = [
       notifications: []
     },
 ];
+
 /* istanbul ignore start */
+/*
 const hashPasswords = async () => {
   for (let user of users) {
       if (!user.password.startsWith("$2b$")) {  // Check if not already hashed
@@ -88,7 +91,9 @@ const hashPasswords = async () => {
 };
 /* istanbul ignore end */
 
-hashPasswords();
+//hashPasswords();
+
+
 /* istanbul ignore end */
 
 /* istanbul ignore start */
@@ -578,4 +583,4 @@ if (require.main === module) {
   app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
 }
 
-module.exports = { events, app, users, db };
+module.exports = { events, app, db };
