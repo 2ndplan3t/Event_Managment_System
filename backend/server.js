@@ -561,59 +561,105 @@ app.put("/api/profile/:id", (req, res) => {
 });
 
 
-//add a volunteer event to a user's history
+
+//volunteer history
+
+// Fetch volunteer history (events) for a user
+app.get("/api/volunteer-history/:id", (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  // Query to get event details for a specific user
+  db.query(`
+      SELECT e.EventName AS eventName, e.EventDesc AS eventDesc, 
+             e.EventLocation AS eventLocation, e.EventDate AS eventDate, 
+             e.EventStatus AS eventStatus
+      FROM EventVolMatch evm
+      JOIN EventList e ON evm.EventID = e.EventID
+      WHERE evm.UserID = ?
+  `, [userId], (err, results) => {
+      if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+      }
+      res.json({ volunteerHistory: results });
+  });
+});
+
+// Add a volunteer event to a user's history
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
+  const { eventId, status } = req.body;
 
-  const user = users.find((u) => u.id === userId);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+  if (!eventId) {
+    return res.status(400).json({ message: "Event ID is required" });
   }
 
-  const { event, eventdesc, location, date, status, fullName, address1, city, state, zipCode, skills } = req.body;
-
-  if (!fullName) return res.status(400).json({ message: "Full name is required" });
-  if (!address1) return res.status(400).json({ message: "Address is required" });
-  if (!city) return res.status(400).json({ message: "City is required" });
-  if (!state) return res.status(400).json({ message: "State is required" });
-  if (!zipCode) return res.status(400).json({ message: "Zipcode is required" });
-  if (!skills) return res.status(400).json({ message: "Skills are required" });
-
-  // Add the event to the user's volunteer history
-  user.volunteerHistory.push({
-    event,
-    eventdesc,
-    location,
-    date,
-    status,
-    fullName,
-    address1,
-    city,
-    state,
-    zipCode,
-    skills,
-  });
-
-  res.json({ message: "Volunteer history updated successfully", volunteerHistory: user.volunteerHistory });
-});
-
-//delete volunteer event from a user's history
-app.delete("/api/volunteer-history/:id/:eventIndex", (req, res) => {
-  const userId = parseInt(req.params.id);
-  const eventIndex = parseInt(req.params.eventIndex);
-  const user = users.find((u) => u.id === userId);
-
-  if (!user) {
+  // Check if the user exists
+  db.query("SELECT * FROM UserProfile WHERE UserID = ?", [userId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+    if (result.length === 0) {
       return res.status(404).json({ message: "User not found" });
-  }
+    }
 
-  if (!user.volunteerHistory || eventIndex < 0 || eventIndex >= user.volunteerHistory.length) {
-      return res.status(400).json({ message: "Invalid event index" });
-  }
-
-  user.volunteerHistory.splice(eventIndex, 1);
-  res.json({ message: "Volunteer event removed successfully", volunteerHistory: user.volunteerHistory });
+    // Add the event to the EventVolMatch table
+    db.query(
+      "INSERT INTO EventVolMatch (EventID, UserID) VALUES (?, ?)",
+      [eventId, userId],
+      (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+        }
+        res.json({ message: "Volunteer event added successfully" });
+      }
+    );
+  });
 });
+
+// Delete a volunteer event from a user's history
+app.delete("/api/volunteer-history/:id/:eventId", (req, res) => {
+  const userId = parseInt(req.params.id);
+  const eventId = parseInt(req.params.eventId);
+
+  // Check if the user exists
+  db.query("SELECT * FROM UserProfile WHERE UserID = ?", [userId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the user is actually associated with the event
+    db.query(
+      "SELECT * FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
+      [eventId, userId],
+      (err, result) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+        }
+        if (result.length === 0) {
+          return res.status(404).json({ message: "Event not found for the user" });
+        }
+
+        // Delete the event from the EventVolMatch table
+        db.query(
+          "DELETE FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
+          [eventId, userId],
+          (err) => {
+            if (err) {
+              return res.status(500).json({ message: "Database error", error: err });
+            }
+            res.json({ message: "Volunteer event removed successfully" });
+          }
+        );
+      }
+    );
+  });
+});
+
+
+
 
 app.get("/api/isLoggedIn", (req, res) => {
   if (req.session.user) {
