@@ -23,7 +23,8 @@ app.use(
 );
 
 
-var users;
+var users = [];
+var events = [];
 // Get all the users from the database
 async function fetchUsers() {
   try {
@@ -216,43 +217,20 @@ app.post("/api/logout", (req, res) => {
 app.get("/api/admin/profile", (req, res) => {
   const user = req.session.user;
 
-  if (user.role !== "Manager") { // Matches your ENUM
-      return res.status(403).json({ message: "Access denied: Admins only" });
+  // Check if the user is authenticated and has the "Manager" role
+  if (!user || user.role !== "Manager") {
+    return res.status(403).json({ message: "Access denied: Admins only" });
   }
 
-  console.log("Fetching profile for user ID:", user.id); // Debug
 
-  db.query(
-      `SELECT li.UserID, li.Email, li.UserRole, 
-              up.FullName, up.AddressLine, up.AddressLine2, 
-              up.City, up.State, up.ZipCode
-       FROM LoginInfo li
-       LEFT JOIN UserProfile up ON li.UserID = up.UserID
-       WHERE li.UserID = ?`,
-      [user.id],
-      (err, userRows) => {
-          if (err) {
-              console.error("Query error:", err);
-              return res.status(500).json({ message: "Internal server error" });
-          }
-
-          if (!userRows || userRows.length === 0) {
-              return res.status(404).json({ message: "User not found" });
-          }
-
-          const dbUser = userRows[0];
-
-          console.log("Database user ID:", dbUser.UserID); // Debug
-
-          res.json({
-              id: dbUser.UserID,
-              email: dbUser.Email,
-              fullName: dbUser.FullName || '',
-              role: dbUser.UserRole
-          });
-      }
-  );
+  res.json({
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName || '',
+    role: user.role
+  });
 });
+
 
 app.get("/api/profile", (req, res) => {
   if (req.session.user) {  // Check if user is authenticated via session
@@ -305,6 +283,9 @@ app.get("/api/users/:id", (req, res) => {
   if(userAcc){
     res.json(userAcc);
   }
+  else if (userAcc === undefined) {
+    return res.status(404).json({ message: "User not found" });
+  }
   else{
     res.status(404).json({ message: "User not found" });
   }
@@ -326,7 +307,7 @@ let events = [];
 
 // match volunteers with event required skills
 const matchVolunteers = (event) => {
-  const volunteers = users.filter(user => user.role === "volunteer");
+  const volunteers = users.filter(user => user.role === "Volunteer");
 
   return volunteers.filter((volunteer) =>
     volunteer.skills.some((skill) => event.requiredSkills.includes(skill))
@@ -384,7 +365,7 @@ app.post('/api/volunteers', (req, res) => {
 
 // Get all volunteers
 app.get('/api/volunteers', (req, res) => {
-  const volunteers = users.filter(user => user.role === 'volunteer');
+  const volunteers = users.filter(user => user.role === 'Volunteer');
   res.json(volunteers);
 });
 
@@ -399,7 +380,7 @@ app.post('/api/events/match-volunteers/:eventId', (req, res) => {
 
   const requiredSkills = event.requiredSkills;
   const matchedVolunteers = users.filter(user => 
-    user.role === "volunteer" && 
+    user.role === "Volunteer" && 
     requiredSkills.some(skill => user.skills.includes(skill))
   );
 
@@ -560,6 +541,24 @@ app.put("/api/profile/:id", (req, res) => {
   return res.json({ message: "Profile updated successfully", profileData: user });
 });
 
+app.get("/api/volunteer-history/:id", (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  // Query to get event details for a specific user
+  db.query(`
+      SELECT e.EventName AS eventName, e.EventDesc AS eventDesc, 
+             e.EventLocation AS eventLocation, e.EventDate AS eventDate, 
+             e.EventStatus AS eventStatus
+      FROM EventVolMatch evm
+      JOIN EventList e ON evm.EventID = e.EventID
+      WHERE evm.UserID = ?
+  `, [userId], (err, results) => {
+      if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+      }
+      res.json({ volunteerHistory: results });
+  });
+});
 
 
 //volunteer history
@@ -587,7 +586,15 @@ app.get("/api/volunteer-history/:id", (req, res) => {
 // Add a volunteer event to a user's history
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
+  console.log("User ID from request:", userId);
   const { eventId, status } = req.body;
+
+  if (!fullName) return res.status(400).json({ message: "Full name is required" });
+  if (!address1) return res.status(400).json({ message: "Address is required" });
+  if (!city) return res.status(400).json({ message: "City is required" });
+  if (!state) return res.status(400).json({ message: "State is required" });
+  if (!zipCode) return res.status(400).json({ message: "Zipcode is required" });
+  if (!skills) return res.status(400).json({ message: "Skills are required" });
 
   if (!eventId) {
     return res.status(400).json({ message: "Event ID is required" });
@@ -611,6 +618,48 @@ app.post("/api/volunteer-history/:id", (req, res) => {
           return res.status(500).json({ message: "Database error", error: err });
         }
         res.json({ message: "Volunteer event added successfully" });
+      }
+    );
+  });
+});
+
+//delete volunteer event from a user's history
+app.delete("/api/volunteer-history/:id/:eventId", (req, res) => {
+  const userId = parseInt(req.params.id);
+  const eventId = parseInt(req.params.eventId);
+
+  // Check if the user exists
+  db.query("SELECT * FROM UserProfile WHERE UserID = ?", [userId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the user is actually associated with the event
+    db.query(
+      "SELECT * FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
+      [eventId, userId],
+      (err, result) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+        }
+        if (result.length === 0) {
+          return res.status(404).json({ message: "Event not found for the user" });
+        }
+
+        // Delete the event from the EventVolMatch table
+        db.query(
+          "DELETE FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
+          [eventId, userId],
+          (err) => {
+            if (err) {
+              return res.status(500).json({ message: "Database error", error: err });
+            }
+            res.json({ message: "Volunteer event removed successfully" });
+          }
+        );
       }
     );
   });

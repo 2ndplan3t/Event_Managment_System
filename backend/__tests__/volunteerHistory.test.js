@@ -6,7 +6,7 @@ describe('POST /api/volunteer-history/:id', () => {
 
   beforeAll(async () => {
     // Connect to the database and set data
-    await db.query('INSERT INTO LoginInfo (UserPass, UserRole) VALUES ("TestPass123", "Volunteer")');
+    await db.query('INSERT INTO LoginInfo (UserPass, UserRole) VALUES ("Test@test.com", "TestPass123", "Volunteer")');
     await db.query('INSERT INTO UserProfile (UserID, FullName, AddressLine, City, State, ZipCode) VALUES (1, "Test User", "123 Test St", "Test City", "TS", "12345")');
   });
 
