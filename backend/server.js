@@ -24,6 +24,7 @@ app.use(
 
 
 var users;
+var events = [];
 // Get all the users from the database
 async function fetchUsers() {
   try {
@@ -39,6 +40,38 @@ async function fetchUsers() {
 
   } catch (error) {
       console.error('Error fetching users:', error);
+  }
+}
+
+async function fetchEvents(){
+  try {
+    const eventsWNoSkill = await new Promise((resolve, reject) => {
+      db.query("SELECT * FROM eventlist", function(err, result){
+        if(err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    console.log("Events fetched from database successfully.");  // Events was successfully gotten
+
+    events = await Promise.all(eventsWNoSkill.map(async (e) => {
+      const requiredSkills = await new Promise((resolve, reject) =>{
+          db.query("SELECT SkillName FROM eventskills WHERE EventID = ?", [e.EventID], function(err, results){
+            if(err) reject(err);
+            else resolve(results.map(skill => skill.SkillName));
+          });
+      });
+
+      return{
+        ...e,
+        requiredSkills
+      };
+    }));
+
+    return events;
+
+  } catch (error){
+    console.error("Error fetching events", error);
   }
 }
 
@@ -135,7 +168,6 @@ app.post("/api/register", (req, res) => {
 
 app.post("/api/login", async(req, res) => {
     await fetchUsers();
-    console.log(users);
     const { email, password } = req.body;
 
     if (!email) {
@@ -162,7 +194,6 @@ app.post("/api/login", async(req, res) => {
             if (!userRows || userRows.length === 0) {
                 return res.status(401).json({ message: "Invalid credentials" });
             }
-            console.log(userRows);
             const user = userRows[0];
 
             bcrypt.compare(password, user.UserPass, (err, isMatch) => {
@@ -274,9 +305,49 @@ app.get("/api/test", (req, res) => {
 
 // get the users list
 app.get("/api/users", (req, res) => {
+  fetchUsers();
   res.json(users);
 });
 
+app.post('/api/events', (req, res) => {
+    const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
+    if (!name || !location || !envoy || !requiredSkills || !urgencyLevel || !date || !manager) {
+      return res.status(400).json({ message: 'Required fields are missing' });
+    }
+
+    db.query("INSERT INTO eventlist (EventName, EventDesc, EventLocation, EventUrgency, EventDate, EventStatus) VALUES (?,?,?,?,?,?)", 
+      [name, envoy, location, urgencyLevel, date, "In Progress"], function(err, result){
+        if(err) throw err;
+        else{
+        console.log("Inserted new event.")
+        var eventID = result.insertId;
+        for(let skill of requiredSkills){
+          db.query("INSERT INTO eventskills (EventID, SkillName) VALUES (?,?)", [eventID, skill.value], function(err){
+            if(err) throw err;
+            else{
+              console.log("Event requires: " + skill.value)
+            }
+          });
+        }
+
+        const newEvent = {
+          id: eventID,
+          name,
+          location,
+          envoy,
+          requiredSkills,
+          urgencyLevel,
+          date,
+          manager,
+          matchedVolunteers: [],
+          selectedVolunteers: [],
+      };
+      events.push(newEvent);
+      res.status(201).json(newEvent);
+
+      }
+    });
+});
 
 // Edit the event's selected users
 app.put('/api/events/:id', async(req, res) =>{
@@ -320,10 +391,6 @@ app.get("/api/admin/:id", (req, res) => {
   }
 }); 
 
-
-let events = [];
-
-
 // match volunteers with event required skills
 const matchVolunteers = (event) => {
   const volunteers = users.filter(user => user.role === "volunteer");
@@ -333,11 +400,11 @@ const matchVolunteers = (event) => {
   );
 };
 
-
-
-// Get all events
-app.get('/api/events', (req, res) => {
-  res.json(events);
+// Get all (NOT CANCELLED/FINISHED) events - to see cancelled and finished events, see report
+app.get('/api/events', async(req, res) => {
+  await fetchEvents();
+  const curr_events = events.filter(event => event.EventStatus == "In Progress");
+  res.json(curr_events);
 });
 
 // Edit the event's selected users
@@ -364,9 +431,11 @@ app.put('/api/events/:id', async(req, res) =>{
 // Delete an event
 app.delete('/api/events/:id', (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  console.log(`Deleting event with ID: ${eventId}`);
-  events = events.filter((event) => event.id !== eventId);
-  console.log('Updated events:', events);
+  db.query("UPDATE eventlist SET EventStatus = ? WHERE EventID = ?",
+    ["Cancelled", eventId], function(err, result){
+      console.log("Event with id " + eventId + " cancelled.")
+  });
+  fetchEvents();
   res.status(200).json({ message: 'Event deleted successfully.' });
 });
 
@@ -625,7 +694,8 @@ app.get("/api/isLoggedIn", (req, res) => {
 // get all data when the server is ran
 async function init() {
   await fetchUsers(); 
-  console.log(users);
+  await fetchEvents();
+  console.log(events);
 }
 
 /* istanbul ignore next */

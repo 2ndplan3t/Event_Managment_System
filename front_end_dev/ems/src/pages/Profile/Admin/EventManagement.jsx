@@ -6,9 +6,11 @@ import 'react-calendar/dist/Calendar.css';
 
 const skillOptions = [
   { value: 'First Aid', label: 'First Aid' },
-  { value: 'Logistics', label: 'Logistics' },
-  { value: 'Security', label: 'Security' },
-  { value: 'Social and Cultural', label: 'Social and Cultural' }
+  { value: 'Animal Handling', label: 'Animal Handling'},
+  { value: 'Cooking', label: 'Cooking'},
+  { value: 'Sewing', label: 'Sewing' },
+  { value: 'Communication', label: 'Communication' },
+  { value: 'Fundraising', label: 'Fundraising' }
 ];
 
 const EventManagement = () => {
@@ -81,10 +83,12 @@ const EventManagement = () => {
       alert("Please select an urgency level.");
       return;
     }
-  
+
+    let dateFormatted = eventDetails.date.getFullYear() + "-" + (eventDetails.date.getMonth()+1) + "-" + eventDetails.date.getDate();
+
     const newEvent = { 
       ...eventDetails, 
-      date: eventDetails.date.toISOString(),
+      date: dateFormatted,
       matchedVolunteers: await findMatchedVols(eventDetails.requiredSkills)
     };
     
@@ -98,6 +102,7 @@ const EventManagement = () => {
   
       if (response.ok) {
         const createdEvent = await response.json();
+        fetchEvents();
 
         // Get the volunteers for the dropdown menu
         const getVols = await volunteerMatch(createdEvent);
@@ -158,7 +163,11 @@ const EventManagement = () => {
     });
 
     if (response.ok) {
-      setEvents(events.filter((event) => event.id !== id));
+      fetchEvents();
+      setTimeout(() => {
+        // After event deletion, reload page
+        window.location.reload();
+    }, 500);
     } else {
       console.error('Failed to delete event');
     }
@@ -175,13 +184,14 @@ const EventManagement = () => {
   
       const users = await response.json();
   
-      const eventIndex = events.findIndex(e => e.id === eventId);
+      console.log(events);
+      const eventIndex = events.findIndex(e => e.EventID === eventId);
       if (eventIndex === -1) {
         console.error('Event not found');
         return;
       }
   
-
+      
       const requiredSkills = events[eventIndex].requiredSkills.map(skill => skill.value);
 
       const matchedVolunteers = users
@@ -282,17 +292,17 @@ const EventManagement = () => {
 
       <h2>Events List</h2>
       {events.map((event) => (
-        <div key={event.id} className="event-item">
-          <h3>{event.name}</h3>
-          <p><strong>Location:</strong> {event.location}</p>
-          <p><strong>Envoy:</strong> {event.envoy}</p>
-          <p><strong>Urgency:</strong> {event.urgencyLevel}</p>
+        <div key={event.EventID} className="event-item">
+          <h3>{event.EventName}</h3>
+          <p><strong>Location:</strong> {event.EventLocation}</p>
+          <p><strong>Envoy:</strong> {event.EventDesc}</p>
+          <p><strong>Urgency:</strong> {event.EventUrgency}</p>
           <p><strong>Manager:</strong> {event.manager}</p>
-          <p><strong>Date:</strong> {new Date(event.date).toDateString()}</p>
-          <button onClick={() => handleDeleteEvent(event.id)}>Delete</button>
+          <p><strong>Date:</strong> {new Date(event.EventDate).toLocaleDateString()}</p>
+          <button onClick={() => handleDeleteEvent(event.EventID)}>Delete</button>
           
           <h4>Matched Volunteers</h4>
-          <button onClick={() => handleMatchVolunteers(event.id)}>
+          <button onClick={() => handleMatchVolunteers(event.EventID)}>
             Match Volunteers
           </button>
           
@@ -302,13 +312,13 @@ const EventManagement = () => {
             value={event.selectedVolunteers || []} // Auto-select matched ones
             onChange={(selectedOptions) => {
               const updatedEvents = events.map(e => 
-                e.id === event.id 
+                e.id === event.EventID 
                   ? { ...e, selectedVolunteers: selectedOptions } 
                   : e
               );
 
               // Send the updated selected volunteers to the API
-              const response = fetch(`http://localhost:5000/api/events/${event.id}`, {
+              const response = fetch(`http://localhost:5000/api/events/${event.EventID}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
