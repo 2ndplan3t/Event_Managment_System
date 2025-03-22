@@ -20,15 +20,17 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
-    "jsonwebtoken": "^9.0.2",
-    "supertest-session": "^5.0.1"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.26.3",
     "jest": "^29.7.0",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "supertest-session": "^5.0.1"
   },
   "babel": {
-    "presets": ["@babel/preset-react"]
+    "presets": [
+      "@babel/preset-react"
+    ]
   }
 }

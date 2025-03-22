@@ -1,11 +1,12 @@
 const express = require("express");
+const app = express();
 const session = require("express-session");
 const cors = require("cors");
 const {db} = require("./db")
 const bcrypt = require('bcrypt');
 require("dotenv").config();
 
-const app = express();
+
 const PORT = 5000;
 
 app.use(cors({
@@ -23,8 +24,8 @@ app.use(
 );
 
 
-var users = [];
-var events = [];
+var users;
+var events= [];
 // Get all the users from the database
 async function fetchUsers() {
   try {
@@ -34,8 +35,8 @@ async function fetchUsers() {
               else resolve(result);   // Resolve if success
           });
       });
-
-      console.log("Users fetched from database successfully.");  // Users was successfully gotten
+      
+      //console.log("Users fetched from database successfully.");  // Users was successfully gotten
       users = users.map(user => ({ ...user }));
 
   } catch (error) {
@@ -43,6 +44,37 @@ async function fetchUsers() {
   }
 }
 
+async function fetchEvents(){
+  try {
+    const eventsWNoSkill = await new Promise((resolve, reject) => {
+      db.query("SELECT * FROM eventlist", function(err, result){
+        if(err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    console.log("Events fetched from database successfully.");  // Events was successfully gotten
+
+    events = await Promise.all(eventsWNoSkill.map(async (e) => {
+      const requiredSkills = await new Promise((resolve, reject) =>{
+          db.query("SELECT SkillName FROM eventskills WHERE EventID = ?", [e.EventID], function(err, results){
+            if(err) reject(err);
+            else resolve(results.map(skill => skill.SkillName));
+          });
+      });
+
+      return{
+        ...e,
+        requiredSkills
+      };
+    }));
+
+    return events;
+
+  } catch (error){
+    console.error("Error fetching events", error);
+  }
+}
 
 // ALL LOGIN STUFF
 /* istanbul ignore start */
@@ -136,7 +168,7 @@ app.post("/api/register", (req, res) => {
 
 app.post("/api/login", async(req, res) => {
     await fetchUsers();
-    console.log(users);
+    //console.log(users);
     const { email, password } = req.body;
 
     if (!email) {
@@ -163,7 +195,7 @@ app.post("/api/login", async(req, res) => {
             if (!userRows || userRows.length === 0) {
                 return res.status(401).json({ message: "Invalid credentials" });
             }
-            console.log(userRows);
+            //console.log(userRows);
             const user = userRows[0];
 
             bcrypt.compare(password, user.UserPass, (err, isMatch) => {
@@ -214,23 +246,46 @@ app.post("/api/logout", (req, res) => {
     //console.log("Logout successful, session destroyed");
 });
 
-app.get("/api/admin/profile", (req, res) => {
+app.get("/api/admin/profile", requireAuth,(req, res) => {
   const user = req.session.user;
 
-  // Check if the user is authenticated and has the "Manager" role
-  if (!user || user.role !== "Manager") {
-    return res.status(403).json({ message: "Access denied: Admins only" });
+  if (user.role !== "Manager") { // Matches your ENUM
+      return res.status(403).json({ message: "Access denied: Admins only" });
   }
 
+  //console.log("Fetching profile for user ID:", user.id); // Debug
 
-  res.json({
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName || '',
-    role: user.role
-  });
+  db.query(
+      `SELECT li.UserID, li.Email, li.UserRole, 
+              up.FullName, up.AddressLine, up.AddressLine2, 
+              up.City, up.State, up.ZipCode
+       FROM LoginInfo li
+       LEFT JOIN UserProfile up ON li.UserID = up.UserID
+       WHERE li.UserID = ?`,
+      [user.id],
+      (err, userRows) => {
+          if (err) {
+              console.error("Query error:", err);
+              return res.status(500).json({ message: "Internal server error" });
+          }
+
+          if (!userRows || userRows.length === 0) {
+              return res.status(404).json({ message: "User not found" });
+          }
+
+          const dbUser = userRows[0];
+
+          //console.log("Database user ID:", dbUser.UserID); // Debug
+
+          res.json({
+              id: dbUser.UserID,
+              email: dbUser.Email,
+              fullName: dbUser.FullName || '',
+              role: dbUser.UserRole
+          });
+      }
+  );
 });
-
 
 app.get("/api/profile", (req, res) => {
   if (req.session.user) {  // Check if user is authenticated via session
@@ -250,12 +305,54 @@ app.get("/api/test", (req, res) => {
     res.json({ message: "Backend is working" });
   });
 
+/* istanbul ignore start */
 // get the users list
-app.get("/api/users", (req, res) => {
+app.get("/api/users", async(req, res) => {
+  await fetchUsers();
   res.json(users);
 });
+/* istanbul ignore end */
 
+app.post('/api/events', (req, res) => {
+  const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
+  if (!name || !location || !envoy || !requiredSkills || !urgencyLevel || !date || !manager) {
+    return res.status(400).json({ message: 'Required fields are missing' });
+  }
 
+  db.query("INSERT INTO eventlist (EventName, EventDesc, EventLocation, EventUrgency, EventDate, EventStatus) VALUES (?,?,?,?,?,?)", 
+    [name, envoy, location, urgencyLevel, date, "In Progress"], function(err, result){
+      if(err) throw err;
+      else{
+      console.log("Inserted new event.")
+      var eventID = result.insertId;
+
+      for(let skill of requiredSkills){
+        db.query("INSERT INTO eventskills (EventID, SkillName) VALUES (?,?)", [eventID, skill.value], function(err){
+          if(err) throw err;
+          else{
+            console.log("Event requires: " + skill.value)
+          }
+        });
+      }
+
+      const newEvent = {
+        id: eventID,
+        name,
+        location,
+        envoy,
+        requiredSkills,
+        urgencyLevel,
+        date,
+        manager,
+        matchedVolunteers: [],
+        selectedVolunteers: [],
+    };
+    events.push(newEvent);
+    res.status(201).json(newEvent);
+
+    }
+  });
+});
 // Edit the event's selected users
 app.put('/api/events/:id', async(req, res) =>{
   const eventId = parseInt(req.params.id, 10);
@@ -283,26 +380,11 @@ app.get("/api/users/:id", (req, res) => {
   if(userAcc){
     res.json(userAcc);
   }
-  else if (userAcc === undefined) {
-    return res.status(404).json({ message: "User not found" });
-  }
   else{
     res.status(404).json({ message: "User not found" });
   }
 });
 
-// route to get admin profile/event management page
-app.get("/api/admin/:id", (req, res) => {
-  const admin = users.find((user) => user.id === parseInt(req.params.id) && user.role === "admin");
-  if (admin) {
-      res.json(admin);
-  } else {
-      res.status(404).json({ message: "Admin not found" });
-  }
-}); 
-
-
-let events = [];
 
 
 // match volunteers with event required skills
@@ -316,9 +398,11 @@ const matchVolunteers = (event) => {
 
 
 
-// Get all events
-app.get('/api/events', (req, res) => {
-  res.json(events);
+// Get all (NOT CANCELLED/FINISHED) events - to see cancelled and finished events, see report
+app.get('/api/events', async(req, res) => {
+  await fetchEvents();
+  const curr_events = events.filter(event => event.EventStatus == "In Progress");
+  res.json(curr_events);
 });
 
 // Edit the event's selected users
@@ -345,9 +429,11 @@ app.put('/api/events/:id', async(req, res) =>{
 // Delete an event
 app.delete('/api/events/:id', (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  console.log(`Deleting event with ID: ${eventId}`);
-  events = events.filter((event) => event.id !== eventId);
-  console.log('Updated events:', events);
+  db.query("UPDATE eventlist SET EventStatus = ? WHERE EventID = ?",
+    ["Cancelled", eventId], function(err, result){
+      console.log("Event with id " + eventId + " cancelled.")
+  });
+  fetchEvents();
   res.status(200).json({ message: 'Event deleted successfully.' });
 });
 
@@ -365,7 +451,9 @@ app.post('/api/volunteers', (req, res) => {
 
 // Get all volunteers
 app.get('/api/volunteers', (req, res) => {
-  const volunteers = users.filter(user => user.role === 'Volunteer');
+  
+  const volunteers = users.filter(user => user.UserRole === 'Volunteer');
+  //console.log(volunteers);
   res.json(volunteers);
 });
 
@@ -447,7 +535,7 @@ app.get("/api/profile/:id", (req, res) => {
 });
 
 // Update user profile by id
-app.put("/api/profile/:id", (req, res) => {
+app.put("/api/profile/:id", async(req, res) => {
   /* istanbul ignore next */
   const userId = parseInt(req.params.id);
   const {
@@ -541,24 +629,6 @@ app.put("/api/profile/:id", (req, res) => {
   return res.json({ message: "Profile updated successfully", profileData: user });
 });
 
-app.get("/api/volunteer-history/:id", (req, res) => {
-  const userId = parseInt(req.params.id);
-
-  // Query to get event details for a specific user
-  db.query(`
-      SELECT e.EventName AS eventName, e.EventDesc AS eventDesc, 
-             e.EventLocation AS eventLocation, e.EventDate AS eventDate, 
-             e.EventStatus AS eventStatus
-      FROM EventVolMatch evm
-      JOIN EventList e ON evm.EventID = e.EventID
-      WHERE evm.UserID = ?
-  `, [userId], (err, results) => {
-      if (err) {
-          return res.status(500).json({ message: "Database error", error: err });
-      }
-      res.json({ volunteerHistory: results });
-  });
-});
 
 
 //volunteer history
@@ -586,15 +656,7 @@ app.get("/api/volunteer-history/:id", (req, res) => {
 // Add a volunteer event to a user's history
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
-  console.log("User ID from request:", userId);
   const { eventId, status } = req.body;
-
-  if (!fullName) return res.status(400).json({ message: "Full name is required" });
-  if (!address1) return res.status(400).json({ message: "Address is required" });
-  if (!city) return res.status(400).json({ message: "City is required" });
-  if (!state) return res.status(400).json({ message: "State is required" });
-  if (!zipCode) return res.status(400).json({ message: "Zipcode is required" });
-  if (!skills) return res.status(400).json({ message: "Skills are required" });
 
   if (!eventId) {
     return res.status(400).json({ message: "Event ID is required" });
@@ -618,48 +680,6 @@ app.post("/api/volunteer-history/:id", (req, res) => {
           return res.status(500).json({ message: "Database error", error: err });
         }
         res.json({ message: "Volunteer event added successfully" });
-      }
-    );
-  });
-});
-
-//delete volunteer event from a user's history
-app.delete("/api/volunteer-history/:id/:eventId", (req, res) => {
-  const userId = parseInt(req.params.id);
-  const eventId = parseInt(req.params.eventId);
-
-  // Check if the user exists
-  db.query("SELECT * FROM UserProfile WHERE UserID = ?", [userId], (err, result) => {
-    if (err) {
-      return res.status(500).json({ message: "Database error", error: err });
-    }
-    if (result.length === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check if the user is actually associated with the event
-    db.query(
-      "SELECT * FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
-      [eventId, userId],
-      (err, result) => {
-        if (err) {
-          return res.status(500).json({ message: "Database error", error: err });
-        }
-        if (result.length === 0) {
-          return res.status(404).json({ message: "Event not found for the user" });
-        }
-
-        // Delete the event from the EventVolMatch table
-        db.query(
-          "DELETE FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
-          [eventId, userId],
-          (err) => {
-            if (err) {
-              return res.status(500).json({ message: "Database error", error: err });
-            }
-            res.json({ message: "Volunteer event removed successfully" });
-          }
-        );
       }
     );
   });
@@ -724,10 +744,11 @@ async function init() {
 }
 
 /* istanbul ignore next */
-if (require.main === module) {
-  /* istanbul ignore next */
-  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
-  init();
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+  });
 }
 
-module.exports = { events, app, users, db };
+module.exports = { app, users};
