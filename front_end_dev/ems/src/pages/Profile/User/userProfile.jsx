@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import './UserProfile.css';
 
-function UserProfile({ onSubmit }) {
+function UserProfile({ onSubmit, existingData }) {
     const [formData, setFormData] = useState({
         fullName: "",
         address1: "",
@@ -24,6 +24,24 @@ function UserProfile({ onSubmit }) {
     const skills = [
         "First-Aid", "Animal Handling", "Cooking", "Sewing", "Communication", "Fundraising"
     ];
+
+    // 💡 If there is already entered data, use that data
+    useEffect(() => {
+        if (existingData) {
+            const user = existingData.userProfile[0];
+            setFormData({
+                fullName: user.FullName || "",
+                address1: user.AddressLine || "",
+                address2: user.AddressLine2 || "",
+                city: user.City || "",
+                state: user.State || "",
+                zipCode: user.ZipCode || "",
+                preferences: user.Preferences || "",
+                skills: existingData.skills || [],
+                availability: existingData.availability || [],
+            });
+        }
+    }, [existingData]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;

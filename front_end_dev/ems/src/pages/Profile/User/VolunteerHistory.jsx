@@ -1,6 +1,6 @@
 import Navbar from "./Navigation"; 
 import './VolunteerHistory.css';
-import React, { useState, useEffect  } from "react";
+import React, { useState, useEffect } from "react";
 
 function VolunteerHistory() {
     const [volunteerHistory, setVolunteerHistory] = useState([]);
@@ -8,14 +8,19 @@ function VolunteerHistory() {
     useEffect(() => {
         const fetchVolunteerHistory = async () => {
             try {
-                const userId = 4; //replace with dynamic user id later
-                const response = await fetch(`http://localhost:5000/api/profile/${userId}`);
+                const userId = JSON.parse(localStorage.getItem("user")).id; // replace with dynamic user id later
+                const response = await fetch(`http://localhost:5000/api/volunteer-history/${userId}`);
+                
                 if (!response.ok) {
                     throw new Error("Failed to fetch volunteer history");
                 }
-                const userData = await response.json();
-                if (userData.volunteerHistory) {
-                    setVolunteerHistory(userData.volunteerHistory);
+                const data = await response.json();
+
+                // Check if volunteerHistory exists and update state
+                if (data.volunteerHistory && data.volunteerHistory.length > 0) {
+                    setVolunteerHistory(data.volunteerHistory);
+                } else {
+                    setVolunteerHistory([]); // No events found
                 }
             } catch (error) {
                 console.error("Error fetching volunteer history:", error);
@@ -24,7 +29,6 @@ function VolunteerHistory() {
 
         fetchVolunteerHistory();
     }, []);
-
 
     return (
         <div className="volunteer-history-container">
@@ -45,20 +49,20 @@ function VolunteerHistory() {
                     </thead>
                     <tbody>
                     {volunteerHistory.length > 0 ? (
-                            volunteerHistory.map((history, index) => (
-                                <tr key={index}>
-                                    <td className="volunteer-history-td">{history.event}</td>
-                                    <td className="volunteer-history-td">{history.eventdesc}</td>
-                                    <td className="volunteer-history-td">{history.location}</td>
-                                    <td className="volunteer-history-td">{history.date}</td>
-                                    <td className="volunteer-history-td">{history.status}</td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="5" className="volunteer-history-td">No volunteer history available</td>
+                        volunteerHistory.map((history, index) => (
+                            <tr key={index}>
+                                <td className="volunteer-history-td">{history.eventName}</td>
+                                <td className="volunteer-history-td">{history.eventDesc}</td>
+                                <td className="volunteer-history-td">{history.eventLocation}</td>
+                                <td className="volunteer-history-td">{history.eventDate}</td>
+                                <td className="volunteer-history-td">{history.eventStatus}</td>
                             </tr>
-                        )}
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan="5" className="volunteer-history-td">No volunteer history available</td>
+                        </tr>
+                    )}
                     </tbody>
                 </table>
             </div>

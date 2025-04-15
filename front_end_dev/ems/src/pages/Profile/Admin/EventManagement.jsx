@@ -23,6 +23,7 @@ const EventManagement = () => {
     urgencyLevel: '',
     date: new Date(),
     manager: '',
+    matchedVolunteers: [],
     selectedVolunteers: []
   });
   
@@ -31,17 +32,30 @@ const EventManagement = () => {
     fetchEvents();
   }, []);
 
-  // Fetch all events
-  const fetchEvents = async () => {
-    const response = await fetch('http://localhost:5000/api/events');
-    if (response.ok) {
-      const data = await response.json();
-      setEvents(data);
-    } else {
-      console.error('Failed to fetch events');
-    }
-  };
-  
+// Fetch all events
+const fetchEvents = async () => {
+  const response = await fetch('http://localhost:5000/api/events');
+  if (response.ok) {
+    const data = await response.json();
+    
+    // For each event, find the matched volunteers
+    const eventsWithVolunteers = await Promise.all(data.map(async (event) => {
+    const matchedVolunteers = await volunteerMatch(event.EventID); // Fetch matched volunteers for the specific event
+    const selectedVolunteers = await getAssignedVols(event.EventID);
+    return { 
+        ...event, 
+        matchedVolunteers, 
+        selectedVolunteers  // Initialize empty selected volunteers for each event
+      };
+    }));
+
+    // Now update the events state with the events that include matched volunteers
+    setEvents(eventsWithVolunteers);
+  } else {
+    console.error('Failed to fetch events');
+  }
+};
+
   const handleEventChange = (e) => {
     const { name, value } = e.target;
     setEventDetails({ ...eventDetails, [name]: value });
@@ -89,7 +103,7 @@ const EventManagement = () => {
     const newEvent = { 
       ...eventDetails, 
       date: dateFormatted,
-      matchedVolunteers: await findMatchedVols(eventDetails.requiredSkills)
+      matchedVolunteers: await volunteerMatch(eventDetails.id)
     };
     
     // Send POST request to create the event
@@ -101,14 +115,8 @@ const EventManagement = () => {
       });
   
       if (response.ok) {
-        const createdEvent = await response.json();
         fetchEvents();
 
-        // Get the volunteers for the dropdown menu
-        const getVols = await volunteerMatch(createdEvent);
-
-        setEvents([...events, { ...createdEvent, matchedVolunteers: getVols, selectedVolunteers: []}]);
-  
         // Reset event form
         setEventDetails({
           name: '',
@@ -129,33 +137,87 @@ const EventManagement = () => {
     }
   };
   
-    // Volunteer match on creation
-    const volunteerMatch = async (event) => {
-      try {
-        const response = await fetch('http://localhost:5000/api/users');
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }  
-        const users = await response.json();
-        const requiredSkills = event.requiredSkills.map(skill => skill.value);
-        const matchedVolunteers = users
-        .filter(user =>
-          user.role === 'volunteer' &&
-          user.skills.some(skill => requiredSkills.includes(skill))
-        )
-        .map(volunteer => ({
-          value: volunteer.id,
-          label: volunteer.fullName,
-        }));
-        return matchedVolunteers; // send back the list
+  const volunteerMatch = async (eventID) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/eventmatch/${eventID}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
       }
-      // else, error
-      catch (error){
-        console.error(error.message);
-        return [];
-      }
-    } 
+      const data = await response.json();
 
+      // map the volunteers
+      const matchedVolunteers = data.map(vol => ({
+        value: vol.UserID,
+        label: vol.FullName
+      }));
+
+      return matchedVolunteers;
+    } catch (error) {
+      console.error(error.message);
+      return [];
+    }
+  };
+
+  const matchAllVolunteers = async(eventid) => {
+    try{
+      // get the event so we can read the matched volunteers & selected volunteers
+      const event = events.find(e => e.EventID === eventid);
+      // get the selected volunteer IDs 
+      const selected = event.selectedVolunteers || [];
+      const selectedIds = new Set(selected.map(v => v.value));
+      // filter so it's just the new volunteers
+      const newVolunteers = event.matchedVolunteers.filter(v => !selectedIds.has(v.value));
+      if(newVolunteers.length > 0){
+        // if any new volunteers were found, do what we do for singular matching but make it happen multiple times
+        await Promise.all(newVolunteers.map(vol =>
+          fetch(`http://localhost:5000/api/events/${eventid}/volunteers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              volunteerId: vol.value,
+              action: 'add'
+            })
+          })
+        ));
+      }
+    
+      // update the display on our side
+      const updatedSelected = [...selected, ...newVolunteers];
+
+      setEvents(prev =>
+        prev.map(e =>
+          e.EventID === eventid
+            ? { ...e, selectedVolunteers: updatedSelected }
+            : e
+        )
+      );
+
+    } catch(error){
+      console.error("Error matching all volunteers:", error);
+    }
+  }
+
+  const getAssignedVols = async(EventID) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/events/${EventID}/selectedUsers`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await response.json();
+
+      // map the volunteers
+      const selectedVols = data.map(vol => ({
+        value: vol.UserID,
+        label: vol.FullName
+      }));
+
+      return selectedVols;
+    } catch (error) {
+      console.error(error.message);
+      return [];
+    }
+  }
+  
   // Delete event
   const handleDeleteEvent = async (id) => {
     const response = await fetch(`http://localhost:5000/api/events/${id}`, {
@@ -173,96 +235,6 @@ const EventManagement = () => {
     }
   };
 
-
-  // Match volunteers to an event
-  const handleMatchVolunteers = async (eventId) => {
-    try {
-      const response = await fetch('http://localhost:5000/api/users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-  
-      const users = await response.json();
-  
-      console.log(events);
-      const eventIndex = events.findIndex(e => e.EventID === eventId);
-      if (eventIndex === -1) {
-        console.error('Event not found');
-        return;
-      }
-  
-      
-      const requiredSkills = events[eventIndex].requiredSkills.map(skill => skill.value);
-
-      const matchedVolunteers = users
-      .filter(user => 
-        user.role === 'volunteer' && 
-        user.skills.some(skill => requiredSkills.includes(skill))
-      )
-      .map(volunteer => ({
-        value: volunteer.id,
-        label: volunteer.fullName,
-      }));
-
-      const updatedEvents = events.map(event =>
-        event.id === eventId
-          ? { 
-              ...event, 
-              matchedVolunteers,      // Store only matched volunteers for dropdown
-              selectedVolunteers: matchedVolunteers // Auto-select them
-            }
-          : event
-      );
-  
-      const response2 = fetch(`http://localhost:5000/api/events/${eventId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-        ...updatedEvents,
-        matchedVolunteers: matchedVolunteers,
-        selectedVolunteers: matchedVolunteers
-        }),
-      })
-      .then(response2 => {
-        if (!response2.ok) {
-          console.error('Failed to update selected volunteers');
-        }
-      })
-      .catch(error => console.error(error.message));
-      // and now update the local array and - yippee!
-      setEvents(updatedEvents);
-
-    } catch (error) {
-      console.error(error.message);
-    }
-  };
-
-  const findMatchedVols = async(skillList) =>{
-    try {
-      const response = await fetch('http://localhost:5000/api/users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      const users = await response.json();
-      const reqSkills = skillList.map(skill => skill.value);
-      const matchedVolunteers = users
-      .filter(user => 
-        user.role === 'volunteer' && 
-        user.skills.some(skill => reqSkills.includes(skill))
-      )
-      .map(volunteer => ({
-        value: volunteer.id,
-        label: volunteer.fullName,
-      }));
-
-      return matchedVolunteers;
-    }
-    // else, error
-      catch (error){
-        console.error(error.message);
-        return [];
-      }
-  }
 
   return (
     <div className="event-management-container">
@@ -302,41 +274,66 @@ const EventManagement = () => {
           <button onClick={() => handleDeleteEvent(event.EventID)}>Delete</button>
           
           <h4>Matched Volunteers</h4>
-          <button onClick={() => handleMatchVolunteers(event.EventID)}>
-            Match Volunteers
+          <button onClick={() => matchAllVolunteers(event.EventID)}>
+            Match All Volunteers
           </button>
           
           <Select
+            // Show all the matched volunteers as options (as long as they're not selected)
             options={event.matchedVolunteers || []} 
             isMulti
-            value={event.selectedVolunteers || []} // Auto-select matched ones
-            onChange={(selectedOptions) => {
-              const updatedEvents = events.map(e => 
-                e.id === event.EventID 
-                  ? { ...e, selectedVolunteers: selectedOptions } 
-                  : e
+            value={event.selectedVolunteers || []}
+            onChange={async (selectedOptions) => {
+              const prevSelected = event.selectedVolunteers || [];
+              const currentSelected = selectedOptions || [];
+            
+              const prevIds = new Set(prevSelected.map(v => v.value));
+              const currentIds = new Set(currentSelected.map(v => v.value));
+            
+              const added = currentSelected.filter(v => !prevIds.has(v.value));
+              const removed = prevSelected.filter(v => !currentIds.has(v.value));
+            
+              setEvents(prev =>
+                prev.map(e =>
+                  e.EventID === event.EventID
+                    ? { ...e, selectedVolunteers: currentSelected }
+                    : e
+                )
               );
 
-              // Send the updated selected volunteers to the API
-              const response = fetch(`http://localhost:5000/api/events/${event.EventID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                ...event,
-                selectedVolunteers: selectedOptions, // Send selected volunteers here
-                }),
-              })
-              .then(response => {
-                if (!response.ok) {
-                  console.error('Failed to update selected volunteers');
+              try {
+                // Handle added volunteers
+                for (const vol of added) {
+                  await fetch(`http://localhost:5000/api/events/${event.EventID}/volunteers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      volunteerId: vol.value,
+                      action: 'add',
+                    }),
+                  });
                 }
-              })
-              .catch(error => console.error(error.message));
-              // and now update the local array and - yippee!
-              setEvents(updatedEvents);
+            
+                // Handle removed volunteers
+                for (const vol of removed) {
+                  await fetch(`http://localhost:5000/api/events/${event.EventID}/volunteers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      volunteerId: vol.value,
+                      action: 'remove',
+                    }),
+                  });
+                }
+
+              } catch (error) {
+                console.error("Error updating volunteer assignments:", error);
+              }
             }}
-          classNamePrefix="custom-select"
-        />
+            
+  classNamePrefix="custom-select"
+/>
+
 
         </div>
       ))}
