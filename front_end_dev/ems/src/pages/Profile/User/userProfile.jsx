@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import './UserProfile.css';
 
-function UserProfile({ userId,onSubmit }) {
+function UserProfile({ onSubmit, existingData }) {
     const [formData, setFormData] = useState({
         fullName: "",
         address1: "",
@@ -9,8 +9,8 @@ function UserProfile({ userId,onSubmit }) {
         city: "",
         state: "",
         zipCode: "",
-        skills: [],
         preferences: "",
+        skills: [],
         availability: [],
     });
 
@@ -25,7 +25,24 @@ function UserProfile({ userId,onSubmit }) {
         "First-Aid", "Animal Handling", "Cooking", "Sewing", "Communication", "Fundraising"
     ];
 
-    
+    // 💡 If there is already entered data, use that data
+    useEffect(() => {
+        if (existingData) {
+            const user = existingData.userProfile[0];
+            setFormData({
+                fullName: user.FullName || "",
+                address1: user.AddressLine || "",
+                address2: user.AddressLine2 || "",
+                city: user.City || "",
+                state: user.State || "",
+                zipCode: user.ZipCode || "",
+                preferences: user.Preferences || "",
+                skills: existingData.skills || [],
+                availability: existingData.availability || [],
+            });
+        }
+    }, [existingData]);
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prevState => {
@@ -39,13 +56,12 @@ function UserProfile({ userId,onSubmit }) {
         });
     };
 
-    
-
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Send POST request to backend to save data
+        // Send PUT request to backend to save data
+        let userId = JSON.parse(localStorage.getItem("user")).id;
         fetch(`http://localhost:5000/api/profile/${userId}`, {
-            method: "POST",
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
@@ -56,7 +72,7 @@ function UserProfile({ userId,onSubmit }) {
             if (data.errors) {
                 console.log(data.errors);
             } else {
-                onSubmit(data.user);
+                onSubmit(data.profileData);
             }
         })
         .catch((error) => console.error("Error saving user profile:", error));
@@ -84,7 +100,7 @@ function UserProfile({ userId,onSubmit }) {
     };
 
     return (
-        <div className="profile-info-section">
+        <div className="profile-info-section"> {/* Apply the class here */}
             <form onSubmit={handleSubmit} className="userprofile-form">
                 <div>
                     <label>Full Name:</label>
@@ -174,6 +190,18 @@ function UserProfile({ userId,onSubmit }) {
                 </div>
 
                 <div>
+                    <label>Preferences:</label>
+                    <textarea
+                        name="preferences"
+                        value={formData.preferences}
+                        onChange={handleChange}
+                        rows="4"
+                        cols="50"
+                        className="userprofile-textarea"
+                    />
+                </div>
+
+                <div>
                     <label>Skills:</label>
                     <div className="custom-dropdown-container">
                         <button type="button" className="dropdown-button" onClick={toggleDropdown}>
@@ -199,18 +227,6 @@ function UserProfile({ userId,onSubmit }) {
                             </div>
                         )}
                     </div>
-                </div>
-
-                <div>
-                    <label>Preferences:</label>
-                    <textarea
-                        name="preferences"
-                        value={formData.preferences}
-                        onChange={handleChange}
-                        rows="4"
-                        cols="50"
-                        className="userprofile-textarea"
-                    />
                 </div>
 
                 <div>

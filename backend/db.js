@@ -15,10 +15,10 @@ db.getConnection((err, connection) =>{
     }
 
     else{
-        console.log("Database connection success!");
-        connection.release();
+            console.log("Database connection success!");
+            connection.release();
     }
 
 });
 
-module.exports = db;
+module.exports = {db};

@@ -1,6 +1,7 @@
 const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
+const {db} = require("./db")
 const bcrypt = require('bcrypt');
 require("dotenv").config();
 
@@ -21,62 +22,61 @@ app.use(
   })
 );
 
-// Hardcoded admin and volunteer profiles
-const users = [
-    { id: 1,
-      email: "admin@example.com",
-      password: "admin_123",
-      role:"admin",
-      fullName:"Admin" },
-    { id: 2, 
-      email: "johndoe@gmail.com", 
-      password: "admin_123", 
-      role:"admin", 
-      fullName:"John Doe" },
-    { id: 3, 
-      email: "charlie@example.com", 
-      password: "volunteer_123", 
-      role:"volunteer", 
-      fullName: "Charlie Brown" ,
-      address1:"1267 Main street",
-      address2:"",
-      city: "Long Island",
-      state: "NY",
-      zip:"88580",
-      skills: ["First Aid", "Security"],
-      volunteerHistory: [],
-      // all of this gets heavily changed later I just wanted it to kinda reflect how it'll look in the database w/ foreign keys n stuff
-      notifications: [
-        { notifID: 0,
-          eventID: 0,
-          eventName: "Cleaning the Beach", // usually you'd use a query for this but alas
-          type: "Assignment",
-          // there will be a way to time notifications later on, but for now this works
-          isCleared: false, // did the user clear this notification?
-          isVisible: true, // Should this notification be visible to the user?
-          text: "You've been assigned to an event! What follows is the event details:" //this will also be heavily changed
-        }
-      ]},
-    { id: 4, 
-      email: "alice@example.com", 
-      password: "volunteer_123", 
-      role:"volunteer", 
-      fullName: "Alice",
-      address1:"",
-      address2:"",
-      city: "",
-      state: "",
-      zip:"",
-      skills: ["First Aid", "Logistics"],
-      volunteerHistory: [ 
-        {event: "Charity Run",
-         eventdesc:"To raise awareness and money for lesser-known diseases",
-         location: "18427 Southwest Fwy, Sugar Land, TX 77479", 
-         date: "2024-06-15",
-         status: "Completed" }],
-      notifications: []
-    },
-];
+
+var users;
+var events = [];
+// Get all the users from the database
+async function fetchUsers() {
+  try {
+      users = await new Promise((resolve, reject) => {
+          db.query("SELECT * FROM logininfo", function(err, result) {
+              if (err) reject(err);  // Reject if issue
+              else resolve(result);   // Resolve if success
+          });
+      });
+
+      console.log("Users fetched from database successfully.");  // Users was successfully gotten
+      users = users.map(user => ({ ...user }));
+
+  } catch (error) {
+      console.error('Error fetching users:', error);
+  }
+}
+
+async function fetchEvents(){
+  try {
+    const eventsWNoSkill = await new Promise((resolve, reject) => {
+      db.query("SELECT * FROM eventlist", function(err, result){
+        if(err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    console.log("Events fetched from database successfully.");  // Events was successfully gotten
+
+    events = await Promise.all(eventsWNoSkill.map(async (e) => {
+      const requiredSkills = await new Promise((resolve, reject) =>{
+          db.query("SELECT SkillName FROM eventskills WHERE EventID = ?", [e.EventID], function(err, results){
+            if(err) reject(err);
+            else resolve(results.map(skill => skill.SkillName));
+          });
+      });
+
+      return{
+        ...e,
+        requiredSkills
+      };
+    }));
+
+    return events;
+
+  } catch (error){
+    console.error("Error fetching events", error);
+  }
+}
+
+
+// ALL LOGIN STUFF
 /* istanbul ignore start */
 const hashPasswords = async () => {
   for (let user of users) {
@@ -86,9 +86,6 @@ const hashPasswords = async () => {
       }
   }
 };
-/* istanbul ignore end */
-
-hashPasswords();
 /* istanbul ignore end */
 
 /* istanbul ignore start */
@@ -101,66 +98,141 @@ const requireAuth = (req, res, next) => {
 /* istanbul ignore end */
 
 // User Registration Route
-app.post("/api/register", async (req, res) => {
-    try {
-        const { fullName, email, password, role = "volunteer", skills = [] } = req.body;
-        if (users.some(user => user.email === email)) return res.status(400).json({ message: "Email already in use." });
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { id: users.length + 1, email, password: hashedPassword, role, fullName, skills };
-        users.push(newUser);
-        res.status(201).json({ message: "Registration successful" });
-    } catch (error) {
-      /* istanbul ignore next */
-        console.error("Registration error:", error);
-        /* istanbul ignore next */
-        res.status(500).json({ message: "Internal server error" });
-    }
+app.post("/api/register", (req, res) => {
+  const { email, password, role = "Volunteer"} = req.body;
+
+  // hashy
+  bcrypt.hash(password, 10, (err, hashedPassword) => {
+      if (err) {
+          console.error("Error hashing password:", err);
+          return res.status(500).json({ message: "Internal server error" });
+      }
+
+      // insert into LoginInfo
+      db.query(
+          `INSERT INTO LoginInfo (Email, UserPass, UserRole) VALUES (?, ?, ?)`,
+          [email, hashedPassword, role],
+          (err, loginResult) => {
+              if (err) {
+                  if (err.code === "ER_DUP_ENTRY") {
+                      return res.status(400).json({ message: "Email already in use." });
+                  }
+                  console.error("Error inserting into LoginInfo:", err);
+                  return res.status(500).json({ message: "Internal server error" });
+              }
+
+              const userID = loginResult.insertId;
+
+              // insert into UserProfile
+              db.query(
+                  `INSERT INTO UserProfile (UserID) VALUES (?)`,
+                  [userID],
+                  (err) => {
+                      if (err) {
+                          console.error("Error inserting into UserProfile:", err);
+                          // Rollback LoginInfo insert if UserProfile fails
+                          db.query("DELETE FROM LoginInfo WHERE UserID = ?", [userID]);
+                          return res.status(500).json({ message: "Internal server error" });
+                      }
+                    // Manually set the session for the newly registered user
+                    req.session.user = {
+                      id: userID,
+                      email: email,
+                      role: role,
+                      fullName: '',
+                      address: {
+                        line1: '',
+                        line2: '',
+                        city: '',
+                        state: '',
+                        zip: ''
+                      }
+                    };
+
+                    res.status(201).json({
+                      message: "Registration successful",
+                      user: {
+                        id: req.session.user.id,
+                        email: req.session.user.email,
+                        role: req.session.user.role,
+                        fullName: req.session.user.fullName
+                      }
+                    });
+                  }
+              );
+          }
+      );
+  });
 });
 
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
 
-  // password presence
-  if (!password) {
-    return res.status(400).json({ message: "Password is required" });
-  }
+app.post("/api/login", async(req, res) => {
+    await fetchUsers();
+    const { email, password } = req.body;
 
-  if (!email){
-    return res.status(400).json({ message: "Email is required" });
-  }
-
-  const user = users.find((u) => u.email === email); 
-
-  // Check if the password is valid
-  try {
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!email) {
+        return res.status(400).json({ message: "Email is required"});
+    }
+    if(!password){
+        return res.status(400).json({ message: "Password is required"});
     }
 
-    // Set session with user data
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName,
-      address1: user.address1,
-      address2: user.address2,
-      city: user.city,
-      state: user.state,
-      zip: user.zip,
-      skills: user.skills || [],
-      volunteerHistory: user.volunteerHistory || [],
-      notifications: user.notifications || [],
-    };
+    db.query(
+        `SELECT li.UserID, li.UserPass, li.UserRole, li.Email,
+                up.FullName, up.AddressLine, up.AddressLine2,
+                up.City, up.State, up.ZipCode
+         FROM LoginInfo li
+         LEFT JOIN UserProfile up ON li.UserID = up.UserID
+         WHERE li.Email = ?`,
+        [email],
+        (err, userRows) => {
+            if (err) {
+                console.error("Query error:", err);
+                return res.status(500).json({ message: "Internal server error" });
+            }
 
-    res.json({ message: "Login successful", user: req.session.user });
-  } catch (error) {
-    /* istanbul ignore next */
-    //console.error("Error during password comparison:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+            if (!userRows || userRows.length === 0) {
+                return res.status(401).json({ message: "Invalid credentials" });
+            }
+            const user = userRows[0];
+
+            bcrypt.compare(password, user.UserPass, (err, isMatch) => {
+                if (err) {
+                    console.error("Bcrypt error:", err);
+                    return res.status(500).json({ message: "Internal server error" });
+                }
+
+                if (!isMatch) {
+                    return res.status(401).json({ message: "Invalid credentials" });
+                }
+
+                // Set session data
+                req.session.user = {
+                    id: user.UserID,
+                    email: user.Email,
+                    role: user.UserRole,
+                    fullName: user.FullName || '',
+                    address: {
+                        line1: user.AddressLine || '',
+                        line2: user.AddressLine2 || '',
+                        city: user.City || '',
+                        state: user.State || '',
+                        zip: user.ZipCode || ''
+                    }
+                };
+
+                res.status(200).json({
+                    message: "Login successful",
+                    user: {
+                        id: req.session.user.id,
+                        email: req.session.user.email,
+                        role: req.session.user.role,
+                        fullName: req.session.user.fullName
+                    }
+                });
+            });
+        }
+    );
 });
 
 app.post("/api/logout", (req, res) => {
@@ -170,17 +242,45 @@ app.post("/api/logout", (req, res) => {
     //console.log("Logout successful, session destroyed");
 });
 
-app.get("/api/admin/profile", requireAuth, (req, res) => {
+app.get("/api/admin/profile", (req, res) => {
   const user = req.session.user;
-  if (user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied: Admins only" });
+
+  if (user.role !== "Manager") { 
+      return res.status(403).json({ message: "Access denied: Admins only" });
   }
-  res.json({
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName,
-    role: user.role,
-  });
+
+  console.log("Fetching profile for user ID:", user.id); // Debug
+
+  db.query(
+      `SELECT li.UserID, li.Email, li.UserRole, 
+              up.FullName, up.AddressLine, up.AddressLine2, 
+              up.City, up.State, up.ZipCode
+       FROM LoginInfo li
+       LEFT JOIN UserProfile up ON li.UserID = up.UserID
+       WHERE li.UserID = ?`,
+      [user.id],
+      (err, userRows) => {
+          if (err) {
+              console.error("Query error:", err);
+              return res.status(500).json({ message: "Internal server error" });
+          }
+
+          if (!userRows || userRows.length === 0) {
+              return res.status(404).json({ message: "User not found" });
+          }
+
+          const dbUser = userRows[0];
+
+          console.log("Database user ID:", dbUser.UserID); // Debug
+
+          res.json({
+              id: dbUser.UserID,
+              email: dbUser.Email,
+              fullName: dbUser.FullName || '',
+              role: dbUser.UserRole
+          });
+      }
+  );
 });
 
 app.get("/api/profile", (req, res) => {
@@ -199,38 +299,122 @@ app.get("/", (req, res) => {
 // Testing backend connection
 app.get("/api/test", (req, res) => {
     res.json({ message: "Backend is working" });
-});
+  });
 
 // get the users list
 app.get("/api/users", (req, res) => {
+  fetchUsers();
   res.json(users);
 });
 
+app.post('/api/events', (req, res) => {
+    const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
+    if (!name || !location || !envoy || !requiredSkills || !urgencyLevel || !date || !manager) {
+      return res.status(400).json({ message: 'Required fields are missing' });
+    }
+
+    db.query("INSERT INTO eventlist (EventName, EventDesc, EventLocation, EventUrgency, EventDate, EventStatus) VALUES (?,?,?,?,?,?)", 
+      [name, envoy, location, urgencyLevel, date, "In Progress"], function(err, result){
+        if(err) throw err;
+        else{
+        console.log("Inserted new event.")
+        var eventID = result.insertId;
+        for(let skill of requiredSkills){
+          db.query("INSERT INTO eventskills (EventID, SkillName) VALUES (?,?)", [eventID, skill.value], function(err){
+            if(err) throw err;
+            else{
+              console.log("Event requires: " + skill.value)
+            }
+          });
+        }
+
+        const newEvent = {
+          id: eventID,
+          name,
+          location,
+          envoy,
+          requiredSkills,
+          urgencyLevel,
+          date,
+          manager,
+          matchedVolunteers: [],
+          selectedVolunteers: [],
+      };
+      events.push(newEvent);
+      res.status(201).json(newEvent);
+
+      }
+    });
+});
+
+app.get('/api/eventmatch/:id', async (req, res) => {
+  try {
+    const eventID = parseInt(req.params.id, 10); // Get the event ID from URL params
+
+    // Run the query to get the user IDs who match all required skills for the event
+    // Also check and confirm they're available on the date of the event
+    db.query(`SELECT us.UserID, info.FullName
+              FROM userprofile AS info
+              JOIN userskills AS us ON us.UserID = info.UserID
+              JOIN eventskills AS es ON us.SkillName = es.SkillName
+              JOIN eventlist AS e ON es.EventID = e.EventID
+              JOIN useravailability AS ua ON ua.UserID = us.UserID AND ua.DateAvail = e.EventDate
+              WHERE es.EventID = ?
+              GROUP BY us.UserID
+              HAVING COUNT(DISTINCT us.SkillName) = (
+                SELECT COUNT(DISTINCT SkillName)
+                FROM eventskills
+                WHERE EventID = ?
+            )`, [eventID, eventID], (err, results) => {
+      if (err) {
+        // Handle query errors
+        console.error(err);
+        return res.status(500).json({ message: 'An error occurred while processing the request.' });
+      }
+
+      // Return the results as JSON
+      return res.status(200).json(results);
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'An error occurred while processing the request.' });
+  }
+});
+
+app.get('/api/events/:id/selectedUsers', async(req, res) =>{
+  const eventId = parseInt(req.params.id, 10);
+  try {
+    getSelectedVols = await new Promise((resolve, reject) => {
+        db.query("SELECT eventvolmatch.UserID, userprofile.FullName FROM eventvolmatch, userprofile WHERE EventID = ? AND eventvolmatch.userID = userprofile.UserID", [eventId],  function(err, result) {
+            if (err) reject(err);  // Reject if issue
+            else resolve(result);   // Resolve if success
+        });
+    });
+  } catch (error) {
+      console.error('Error fetching selected volunteers:', error);
+  }
+
+  return res.status(200).json(getSelectedVols);
+});
 
 // Edit the event's selected users
-app.put('/api/events/:id', async(req, res) =>{
+app.post('/api/events/:id/volunteers', async(req, res) =>{
   const eventId = parseInt(req.params.id, 10);
-  const eventData = req.body;
-  const eventIndex = events.findIndex((event) => event.id === eventId);
-  
-  // if event couldn't be found:
-  if (eventIndex === -1) {
-    return res.status(404).json({ message: 'Event not found' });  // Return a 404 if the event does not exist
-  }
-  
-  // otherwise, we update the event
-  const updatedEvent = {
-    ...events[eventIndex],
-    ...eventData,
-  };
+  const req_body = req.body;
 
-  events[eventIndex] = updatedEvent;
-  return res.status(200).json(updatedEvent);
+  if(req_body.action == "add"){
+    db.query("INSERT INTO eventvolmatch (EventID, UserID) VALUES (?, ?)", [eventId, req_body.volunteerId])
+  }
+  else if(req_body.action == "remove"){
+    db.query("DELETE FROM eventvolmatch WHERE EventID = ? AND UserID = ?", [eventId, req_body.volunteerId])
+  }
+
+  return res.status(200).json("Success");
 });
 
 // get notifications from the user
 app.get("/api/users/:id", (req, res) => {
-  const userAcc = users.find((user) => user.id === parseInt(req.params.id));
+  const userAcc = users.find((user) => user.UserID === parseInt(req.params.id));
   if(userAcc){
     res.json(userAcc);
   }
@@ -239,158 +423,192 @@ app.get("/api/users/:id", (req, res) => {
   }
 });
 
-// Edit user's notifications
-app.put("/api/users/:id", async(req, res) =>{
-  const userId = parseInt(req.params.id, 10);
-  const newNotifs = req.body;
-  const userIndex = users.findIndex((user) => user.id === userId);
-  
-  // if user cannot be found
-  if (userIndex === -1) {
-    return res.status(404).json({ message: 'User not found' });  // Return a 404 if the user does not exist
+// route to get admin profile/event management page
+app.get("/api/admin/:id", (req, res) => {
+  const admin = users.find((user) => user.id === parseInt(req.params.id) && user.role === "admin");
+  if (admin) {
+      res.json(admin);
+  } else {
+      res.status(404).json({ message: "Admin not found" });
   }
-  
-  // otherwise, we update the user
-  const updatedUser = {
-    ...users[userIndex],
-    notifications: newNotifs
-  };
+}); 
 
-  users[userIndex] = updatedUser;
-  return res.status(200).json(updatedUser);
+// Get all (NOT CANCELLED/FINISHED) events - to see cancelled and finished events, see report
+app.get('/api/events', async(req, res) => {
+  await fetchEvents();
+  const curr_events = events.filter(event => event.EventStatus == "In Progress");
+  res.json(curr_events);
 });
 
-let events = [];
-
-// Match volunteers with event required skills
-const matchVolunteers = (event) => {
-    const volunteers = users.filter(user => user.role === "volunteer");
-    return volunteers.filter((volunteer) =>
-        volunteer.skills.some((skill) => event.requiredSkills.includes(skill))
-    );
-};
-
-const event_num = 0;
-app.post('/api/events', (req, res) => {
-  
-    const { name, location, envoy, requiredSkills, urgencyLevel, date, manager } = req.body;
-    if (!name || !location || !envoy || !requiredSkills || !urgencyLevel || !date || !manager) {
-      return res.status(400).json({ message: 'Required fields are missing' });
-    }
-    const newEvent = {
-        id: events.length + 1,
-        name,
-        location,
-        envoy,
-        requiredSkills,
-        urgencyLevel,
-        date,
-        manager,
-        matchedVolunteers: [],
-        selectedVolunteers: [],
-    };
-    events.push(newEvent);
-    res.status(201).json(newEvent);
-});
-// Edit the event's selected users
-app.put('/api/events/:id', async(req, res) =>{
-  const eventId = parseInt(req.params.id, 10);
-  const eventData = req.body;
-  const eventIndex = events.findIndex((event) => event.id === eventId);
-  
-  // if event couldn't be found:
-  if (eventIndex === -1) {
-    return res.status(404).json({ message: 'Event not found' });  // Return a 404 if the event does not exist
-  }
-  
-  // otherwise, we update the event
-  const updatedEvent = {
-    ...events[eventIndex],
-    ...eventData,
-  };
-
-  events[eventIndex] = updatedEvent;
-  return res.status(200).json(updatedEvent);
-});
-
-
-app.get('/api/events', (req, res) => {
-    //console.log(events);
-    res.json(events);
-});
-
+// Delete an event
 app.delete('/api/events/:id', (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  //console.log(`Deleting event with ID: ${eventId}`);
-  
-  // Find if the event exists before filtering
-  const eventExists = events.some(event => event.id === eventId);
-  //console.log('Events before deletion:', events)
-  if (!eventExists) {
-    return res.status(404).json({ message: 'Event not found' });
-  }
-  
-  events = events.filter((event) => event.id !== eventId);
-  //console.log('Updated events:', events);
+  db.query("UPDATE eventlist SET EventStatus = ? WHERE EventID = ?",
+    ["Cancelled", eventId], function(err, result){
+      console.log("Event with id " + eventId + " cancelled.")
+  });
+  fetchEvents();
   res.status(200).json({ message: 'Event deleted successfully.' });
 });
 
-
-app.get('/api/volunteers', (req, res) => {
-    const volunteers = users.filter(user => user.role === 'volunteer');
-    res.json(volunteers);
+// Create a new volunteer
+app.post('/api/volunteers', (req, res) => {
+  const { name, skills } = req.body;
+  const newVolunteer = {
+    id: volunteers.length + 1,
+    name,
+    skills,
+  };
+  volunteers.push(newVolunteer);
+  res.status(201).json(newVolunteer);
 });
 
-
-app.post('/api/events/match-volunteers/:eventId', (req, res) => {
-  const eventId = parseInt(req.params.eventId, 10);
-  console.log('Event ID:', eventId); // Debug: Log the eventId
-  console.log('Events in server:', events); // Debug: Log the events array
-
-  const event = events.find(e => e.id === eventId);
-
-  if (!event) {
-    return res.status(404).json({ message: "Event not found." });
-  }
-
-  const requiredSkills = event.requiredSkills;
-  const matchedVolunteers = users.filter(user => 
-    user.role === "volunteer" && 
-    requiredSkills.some(skill => user.skills.includes(skill))
-  );
-
-  res.status(200).json(matchedVolunteers);
+// Get all volunteers
+app.get('/api/volunteers', (req, res) => {
+  const volunteers = users.filter(user => user.role === 'volunteer');
+  res.json(volunteers);
 });
 
 //user profile management
 //get user profile by ID
 app.get("/api/profile/:id", (req, res) => {
-  const user = users.find((user) => user.id === parseInt(req.params.id));
+  const user = users.find((user) => user.UserID === parseInt(req.params.id));
   if (user) {
-    res.json(user);
+
+    // all three queries need to execute, be combined into one object, and then returned. yippee!
+    const userProfileQuery = new Promise((resolve, reject) => {
+      db.query("SELECT * FROM userprofile WHERE UserID = ?", [req.params.id], function(err, result) {
+        if(err) reject(err);
+        else{
+          resolve(result);
+        }
+      });
+    });
+
+    const skillsProfileQuery = new Promise((resolve, reject) => {
+      db.query("SELECT SkillName FROM userskills WHERE UserID = ?", [req.params.id], function(err, result){
+        if(err) reject(err);
+        else{
+          resolve(result);
+        }
+      });
+    });
+
+    const availabilityProfileQuery = new Promise((resolve, reject) => {
+      db.query("SELECT DateAvail FROM useravailability WHERE UserID = ?", [req.params.id], function(err, result){
+        if(err) reject(err);
+        else{
+          resolve(result);
+        }
+      });
+    });
+
+    // And now, we take everything, combine it together, panic?
+    Promise.all([userProfileQuery, skillsProfileQuery, availabilityProfileQuery])
+      .then((results) => {
+        const[userProfile, userSkills, userAvailability] = results;
+        const fullResult = {
+          userProfile: userProfile,
+          skills: userSkills.map(skill => skill.SkillName),
+          availability: userAvailability.map(avail => {
+            const date = new Date(avail.DateAvail);
+            return date.toLocaleDateString(); // This will return the date in a "MM/DD/YYYY" format
+          })
+        }
+        res.json(fullResult);
+      })
+      .catch((err) =>{
+        console.error("Error getting user profile: ", err);
+        res.status(500).json({error: "Server error"});
+      });
+  
   } else {
     /* istanbul ignore next */
     res.status(404).json({ message: "User not found" });
   }
 });
 
-// Update user profile
-app.put("/api/profile", requireAuth, (req, res) => {
+// Update user profile by id
+app.put("/api/profile/:id", async (req, res) => {
   /* istanbul ignore next */
-  const userId = req.session.user ? req.session.user.id : null;
+  const userId = parseInt(req.params.id);
   const {
     fullName,
     address1,
     address2,
     city,
     state,
-    zipCode, 
+    zipCode,
+    preferences, 
     skills,
-    preferences,
     availability,
   } = req.body;
 
-  const user = users.find((user) => user.id === userId);
+  // first, insert this into the table
+  db.query("UPDATE userprofile SET FullName = ?, AddressLine = ?, AddressLine2 = ?, City = ?, State = ?, ZipCode = ?, Preferences = ? WHERE UserID = ?",
+        [fullName, address1, address2, city, state, zipCode, preferences, userId], function(err){
+          if(err) throw err;
+          else{
+            console.log("User profile updated");
+          }
+        });
+
+  try {
+    await new Promise((resolve, reject) => {
+      db.query("DELETE FROM userskills WHERE UserID = ?", [userId], function(err) {
+        if (err) reject(err);
+        else {
+          console.log("User skills reset");
+          resolve();
+        }
+      });
+    });
+
+    for (let skill of skills) {
+      await new Promise((resolve, reject) => {
+        db.query("INSERT INTO userskills (UserID, SkillName) VALUES (?, ?)", [userId, skill], function(err) {
+          if (err) reject(err);
+          else {
+            console.log("Inserted " + skill);
+            resolve();
+          }
+        });
+      });
+    }
+
+  } catch (err) {
+      console.error("Error editing skills: ", err)
+  }
+
+  try {
+    await new Promise((resolve, reject) => {
+      db.query("DELETE FROM useravailability WHERE UserID = ?", [userId], function(err){
+        if (err) reject(err);
+        else {
+          console.log("User availability reset");
+          resolve();
+        }
+      });
+    });
+
+    for (let avail of availability) {
+      await new Promise((resolve, reject) => {
+        const formattedDate = new Date(avail).toISOString().slice(0, 10);
+        db.query("INSERT INTO useravailability (UserID, DateAvail) VALUES (?,?)", [userId, formattedDate], function(err){
+          if(err) throw err;
+          else{
+            console.log("Inserted " + avail)
+            resolve();
+          }
+        });
+      });
+    }
+
+  } catch (err) {
+      console.error("Error editing skills: ", err)
+  }
+
+  const user = users.find((user) => user.UserID === userId);
   /* istanbul ignore next */
   if (!user) {
     /* istanbul ignore next */
@@ -398,14 +616,14 @@ app.put("/api/profile", requireAuth, (req, res) => {
   }
 
   // Update only provided fields, keeping existing values if not sent
-  user.fullName = fullName !== undefined ? fullName : user.fullName;
-  user.address1 = address1 !== undefined ? address1 : user.address1;
-  user.address2 = address2 !== undefined ? address2 : user.address2 || "";
-  user.city = city !== undefined ? city : user.city || "";
-  user.state = state !== undefined ? state : user.state || "";
-  user.zip = zipCode !== undefined ? zipCode : user.zip || ""; 
+  user.FullName = fullName !== undefined ? fullName : user.FullName;
+  user.AddressLine = address1 !== undefined ? address1 : user.AddressLine;
+  user.AddressLine2 = address2 !== undefined ? address2 : user.AddressLine2 || "";
+  user.City = city !== undefined ? city : user.City || "";
+  user.State = state !== undefined ? state : user.State || "";
+  user.ZipCode = zipCode !== undefined ? zipCode : user.ZipCode || ""; 
+  user.Preferences = preferences !== undefined ? preferences : user.Preferences || "";
   user.skills = skills !== undefined ? skills : user.skills || [];
-  user.preferences = preferences !== undefined ? preferences : user.preferences || "";
   user.availability = availability !== undefined ? availability : user.availability || [];
 
    // Sync session with updated user data
@@ -413,12 +631,12 @@ app.put("/api/profile", requireAuth, (req, res) => {
     id: user.id,
     email: user.email,
     role: user.role,
-    fullName: user.fullName,
-    address1: user.address1,
-    address2: user.address2,
-    city: user.city,
-    state: user.state,
-    zip: user.zip,
+    FullName: user.FullName,
+    AddressLine: user.AddressLine,
+    AddressLine2: user.AddressLine2,
+    City: user.City,
+    State: user.State,
+    ZipCode: user.ZipCode,
     skills: user.skills || [],
     volunteerHistory: user.volunteerHistory || [],
     notifications: user.notifications || [],
@@ -428,59 +646,102 @@ app.put("/api/profile", requireAuth, (req, res) => {
 });
 
 
-//add a volunteer event to a user's history
+//volunteer history
+
+// Fetch volunteer history (events) for a user
+app.get("/api/volunteer-history/:id", (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  // Query to get event details for a specific user
+  db.query(`
+      SELECT e.EventName AS eventName, e.EventDesc AS eventDesc, 
+             e.EventLocation AS eventLocation, e.EventDate AS eventDate, 
+             e.EventStatus AS eventStatus
+      FROM EventVolMatch evm
+      JOIN EventList e ON evm.EventID = e.EventID
+      WHERE evm.UserID = ?
+  `, [userId], (err, results) => {
+      if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+      }
+      res.json({ volunteerHistory: results });
+  });
+});
+
+// Add a volunteer event to a user's history
 app.post("/api/volunteer-history/:id", (req, res) => {
   const userId = parseInt(req.params.id);
+  const { eventId, status } = req.body;
 
-  const user = users.find((u) => u.id === userId);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+  if (!eventId) {
+    return res.status(400).json({ message: "Event ID is required" });
   }
 
-  const { event, eventdesc, location, date, status, fullName, address1, city, state, zipCode, skills } = req.body;
-
-  if (!fullName) return res.status(400).json({ message: "Full name is required" });
-  if (!address1) return res.status(400).json({ message: "Address is required" });
-  if (!city) return res.status(400).json({ message: "City is required" });
-  if (!state) return res.status(400).json({ message: "State is required" });
-  if (!zipCode) return res.status(400).json({ message: "Zipcode is required" });
-  if (!skills) return res.status(400).json({ message: "Skills are required" });
-
-  // Add the event to the user's volunteer history
-  user.volunteerHistory.push({
-    event,
-    eventdesc,
-    location,
-    date,
-    status,
-    fullName,
-    address1,
-    city,
-    state,
-    zipCode,
-    skills,
-  });
-
-  res.json({ message: "Volunteer history updated successfully", volunteerHistory: user.volunteerHistory });
-});
-
-//delete volunteer event from a user's history
-app.delete("/api/volunteer-history/:id/:eventIndex", (req, res) => {
-  const userId = parseInt(req.params.id);
-  const eventIndex = parseInt(req.params.eventIndex);
-  const user = users.find((u) => u.id === userId);
-
-  if (!user) {
+  // Check if the user exists
+  db.query("SELECT * FROM UserProfile WHERE UserID = ?", [userId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+    if (result.length === 0) {
       return res.status(404).json({ message: "User not found" });
-  }
+    }
 
-  if (!user.volunteerHistory || eventIndex < 0 || eventIndex >= user.volunteerHistory.length) {
-      return res.status(400).json({ message: "Invalid event index" });
-  }
-
-  user.volunteerHistory.splice(eventIndex, 1);
-  res.json({ message: "Volunteer event removed successfully", volunteerHistory: user.volunteerHistory });
+    // Add the event to the EventVolMatch table
+    db.query(
+      "INSERT INTO EventVolMatch (EventID, UserID) VALUES (?, ?)",
+      [eventId, userId],
+      (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+        }
+        res.json({ message: "Volunteer event added successfully" });
+      }
+    );
+  });
 });
+
+// Delete a volunteer event from a user's history
+app.delete("/api/volunteer-history/:id/:eventId", (req, res) => {
+  const userId = parseInt(req.params.id);
+  const eventId = parseInt(req.params.eventId);
+
+  // Check if the user exists
+  db.query("SELECT * FROM UserProfile WHERE UserID = ?", [userId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the user is actually associated with the event
+    db.query(
+      "SELECT * FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
+      [eventId, userId],
+      (err, result) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error", error: err });
+        }
+        if (result.length === 0) {
+          return res.status(404).json({ message: "Event not found for the user" });
+        }
+
+        // Delete the event from the EventVolMatch table
+        db.query(
+          "DELETE FROM EventVolMatch WHERE EventID = ? AND UserID = ?",
+          [eventId, userId],
+          (err) => {
+            if (err) {
+              return res.status(500).json({ message: "Database error", error: err });
+            }
+            res.json({ message: "Volunteer event removed successfully" });
+          }
+        );
+      }
+    );
+  });
+});
+
 
 app.get("/api/isLoggedIn", (req, res) => {
   if (req.session.user) {
@@ -489,10 +750,18 @@ app.get("/api/isLoggedIn", (req, res) => {
   return res.json({ loggedIn: false });
 });
 
+// get all data when the server is ran
+async function init() {
+  await fetchUsers(); 
+  await fetchEvents();
+  console.log(events);
+}
+
 /* istanbul ignore next */
 if (require.main === module) {
   /* istanbul ignore next */
   app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  init();
 }
 
-module.exports = { events, app, users };
+module.exports = { events, app, users, db };
