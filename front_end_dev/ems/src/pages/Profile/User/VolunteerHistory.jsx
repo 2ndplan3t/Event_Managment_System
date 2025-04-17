@@ -54,7 +54,7 @@ function VolunteerHistory() {
                                 <td className="volunteer-history-td">{history.eventName}</td>
                                 <td className="volunteer-history-td">{history.eventDesc}</td>
                                 <td className="volunteer-history-td">{history.eventLocation}</td>
-                                <td className="volunteer-history-td">{history.eventDate}</td>
+                                <td className="volunteer-history-td">{new Date(history.eventDate).toLocaleDateString()}</td>
                                 <td className="volunteer-history-td">{history.eventStatus}</td>
                             </tr>
                         ))

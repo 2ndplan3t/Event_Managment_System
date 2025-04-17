@@ -397,29 +397,104 @@ app.get('/api/events/:id/selectedUsers', async(req, res) =>{
   return res.status(200).json(getSelectedVols);
 });
 
-// Edit the event's selected users
-app.post('/api/events/:id/volunteers', async(req, res) =>{
+app.post('/api/events/:id/volunteers', async (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  const req_body = req.body;
+  const { action, volunteerId } = req.body;
 
-  if(req_body.action == "add"){
-    db.query("INSERT INTO eventvolmatch (EventID, UserID) VALUES (?, ?)", [eventId, req_body.volunteerId])
-  }
-  else if(req_body.action == "remove"){
-    db.query("DELETE FROM eventvolmatch WHERE EventID = ? AND UserID = ?", [eventId, req_body.volunteerId])
-  }
+  // add volunteer - make sure one query finishes before doing the other
+  try {
+    if (action === "add") {
+      await new Promise((resolve, reject) => {
+        db.query(
+          "INSERT INTO eventvolmatch (EventID, UserID) VALUES (?, ?)",
+          [eventId, volunteerId],
+          (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+          }
+        );
+      });
+      
+      await new Promise((resolve, reject) => {
+        db.query(
+          "INSERT INTO usernotifs (UserID, EventID, NotifType) VALUES (?, ?, 'Assigned')",
+          [volunteerId, eventId],
+          (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+          }
+        );
+      });
+      // remove volunteer - same idea, make sure one finishes before the other.
+    } else if (action === "remove") {
+      await new Promise((resolve, reject) => {
+        db.query(
+          "DELETE FROM eventvolmatch WHERE EventID = ? AND UserID = ?",
+          [eventId, volunteerId],
+          (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+          }
+        );
+      });
 
-  return res.status(200).json("Success");
+      await new Promise((resolve, reject) => {
+        db.query(
+          "INSERT INTO usernotifs (UserID, EventID, NotifType) VALUES (?, ?, 'Removed')",
+          [volunteerId, eventId],
+          (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+          }
+        );
+      });
+    }
+    return res.status(200).json("Success");
+  } catch (err) {
+    console.error("Error updating volunteers:", err);
+    return res.status(500).json({ message: "Internal server error." });
+  }
 });
 
+
 // get notifications from the user
-app.get("/api/users/:id", (req, res) => {
-  const userAcc = users.find((user) => user.UserID === parseInt(req.params.id));
-  if(userAcc){
-    res.json(userAcc);
+app.get("/api/users/:id", async (req, res) => {
+  const UserID = parseInt(req.params.id);
+  try {
+    notifList = await new Promise((resolve, reject) => {
+        db.query("SELECT NotifID, EventName, EventLocation, EventUrgency, EventDate, NotifType FROM usernotifs, eventlist WHERE usernotifs.UserID = ? AND eventlist.EventID = usernotifs.EventID AND isCleared = FALSE ORDER BY NotifID desc", [UserID], function(err, result) {
+            if (err) reject(err);  // Reject if issue
+            else resolve(result);   // Resolve if success
+        });
+    });
+
+    console.log("User notifications gotten from database.");
+    res.status(200).json({ notifications: notifList });
+
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    res.status(500).json({ message: 'Failed to fetch user notifications' });
   }
-  else{
-    res.status(404).json({ message: "User not found" });
+});
+
+// clear a notification from a user's view
+app.put("/api/notifs/:id", async(req, res) =>{
+  const notifID = parseInt(req.params.id);
+
+  try {
+    notifList = await new Promise((resolve, reject) => {
+        db.query("UPDATE usernotifs SET isCleared = TRUE WHERE notifID = ?", [notifID], function(err, result) {
+            if (err) reject(err);  // Reject if issue
+            else resolve(result);   // Resolve if success
+        });
+    });
+
+    console.log("User notifications gotten from database.");
+    res.status(200).json({ notifications: notifList });
+
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    res.status(500).json({ message: 'Failed to fetch user notifications' });
   }
 });
 
@@ -441,14 +516,26 @@ app.get('/api/events', async(req, res) => {
 });
 
 // Delete an event
-app.delete('/api/events/:id', (req, res) => {
+app.delete('/api/events/:id', async (req, res) => {
   const eventId = parseInt(req.params.id, 10);
   db.query("UPDATE eventlist SET EventStatus = ? WHERE EventID = ?",
     ["Cancelled", eventId], function(err, result){
       console.log("Event with id " + eventId + " cancelled.")
   });
+
+  const getSelectedVols = await new Promise((resolve, reject) => {
+    db.query("SELECT eventvolmatch.UserID FROM eventvolmatch, userprofile WHERE EventID = ? AND eventvolmatch.userID = userprofile.UserID", [eventId],  function(err, result) {
+        if (err) reject(err);  // Reject if issue
+        else resolve(result);   // Resolve if success
+    });
+});
+
+  for(vol of getSelectedVols){
+    db.query("INSERT INTO usernotifs (UserID, EventID, NotifType) VALUES (?, ?, 'Cancelled')",[vol.UserID, eventId]);
+  }
+
   fetchEvents();
-  res.status(200).json({ message: 'Event deleted successfully.' });
+  res.status(200).json({ message: 'Event deleted successfully. All users notified.' });
 });
 
 // Create a new volunteer
@@ -754,7 +841,6 @@ app.get("/api/isLoggedIn", (req, res) => {
 async function init() {
   await fetchUsers(); 
   await fetchEvents();
-  console.log(events);
 }
 
 /* istanbul ignore next */

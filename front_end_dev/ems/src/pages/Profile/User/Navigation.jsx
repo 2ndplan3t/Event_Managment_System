@@ -21,13 +21,15 @@ function Navbar() {
   };
     return (
         <nav className="navbar">
-            <ul>
+            <div className="nav_buttons"> 
+              <ul>
                 <li><Link to="/">Home</Link></li>
                 <li><Link to="/user">Profile</Link></li>
                 <li><Link to="/notifications">Notifications</Link></li>
                 <li><Link to="/history">History</Link></li>
                 <li><span className="logout-text" onClick={handleLogout}>Logout</span></li>
-            </ul>
+              </ul>
+            </div>
         </nav>
     );
 }

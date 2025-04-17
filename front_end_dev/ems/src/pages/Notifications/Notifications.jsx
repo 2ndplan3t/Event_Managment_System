@@ -32,7 +32,16 @@ function Notifications() {
       const userNotifs = await response.json();
       // proceed to set notifications to that. yippee!
       if(userNotifs.notifications.length > 0){
-        setNotifs(userNotifs.notifications);
+        const mappedNotifs = userNotifs.notifications.map((notif) => ({
+          id: notif.NotifID,
+          title: `${notif.NotifType} - ${notif.EventName}`,
+          location: notif.EventLocation,
+          urgency: notif.EventUrgency,
+          date: new Date(notif.EventDate).toLocaleDateString(),
+          type: notif.NotifType,
+          name: notif.EventName
+        }));
+        setNotifs(mappedNotifs);
       }
       else{
         setNotifs([]) 
@@ -45,11 +54,11 @@ function Notifications() {
 
   const handleClearNotif = async(notifID) => {
     try{
-      const updatedNotifs = notifs.filter((notif) => notif.notifID !== notifID);
+      const updatedNotifs = notifs.filter((notif) => notif.id !== notifID);
       setNotifs(updatedNotifs);
 
-      // should let you edit suer
-      const response = await fetch(`http://localhost:5000/api/users/${user.profileData.id}`, {
+      // should edit the notification
+      const response = await fetch(`http://localhost:5000/api/notifs/${notifID}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -60,11 +69,6 @@ function Notifications() {
         }),
       });
 
-      if (response.ok) {
-        console.log("Notification cleared");
-      } else {
-        console.error('Failed to clear notification');
-      }
     }
     catch (error){
       console.error('Error clearing notification:', error);
@@ -106,22 +110,50 @@ function Notifications() {
          <Link to="/history"><button type="button">History</button></Link>
          <button onClick={handleLogout}>Logout</button>
         </div>
+       
         <h1>Notifications</h1>
-      </header>
+        </header>
+
       <div className="notif_area">
         {notifs.length > 0 ? (
-          notifs.map((notif) => (
-          <div key={notif.notifID} className="notification">
-            <h3>{notif.type}</h3>
-            <span><strong>ALERT:</strong> {notif.text}</span><br></br>
-            <span><strong>Event Name:</strong> {notif.eventName} </span>
-            <button className="clear" onClick={() => handleClearNotif(notif.notifID)}>×</button>
-          </div>
-          ))
+          notifs.map((notif) => {
+            const type = notif.type.toLowerCase();
+            return (
+              <div key={notif.id || notif.notifID} className="notification">
+                {type === 'assigned' && (
+                  <>
+                    <h3>Event Assignment</h3>
+                    <p>You have been <strong>assigned</strong> to <strong>{notif.name}</strong>.</p>
+                    <p><strong>Location:</strong>{notif.location}.</p>
+                    <p><strong>Event Date:</strong> {notif.date}</p>
+                  </>
+                )}
+
+                {type === 'removed' && (
+                  <>
+                    <h3>Event Removal</h3>
+                    <p>You have been <strong>removed</strong> from <strong>{notif.name}</strong>.</p>
+                    <p><strong>Location:</strong> {notif.location}.</p>
+                  </>
+                )}
+
+                {type === 'cancelled' && (
+                  <>
+                    <h3>Event Cancellation</h3>
+                    <p>The event <strong>{notif.name}</strong> at <strong>{notif.location}</strong> has been <strong>cancelled</strong>.</p>
+                    <p><strong>Event Date:</strong> {notif.date}</p>
+                  </>
+                )}
+
+                <button className="clear" onClick={() => handleClearNotif(notif.id)}>×</button>
+              </div>
+            );
+          })
         ) : (
-          <p><strong>No Notifications</strong></p>  // if there are no notifications, tell the user such
+          <p><strong>No Notifications</strong></p>
         )}
       </div>
+
       
       <footer>
         <p><a href= "https://github.com/2ndplan3t/Event_Managment_System/tree/main"><img src="src/assets/GitHub-logo.png" alt="Github Link" width="80px" height="40px"></img></a> &copy; Copyright Group 9</p>

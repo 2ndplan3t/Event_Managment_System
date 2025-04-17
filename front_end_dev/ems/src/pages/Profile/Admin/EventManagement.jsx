@@ -102,8 +102,7 @@ const fetchEvents = async () => {
 
     const newEvent = { 
       ...eventDetails, 
-      date: dateFormatted,
-      matchedVolunteers: await volunteerMatch(eventDetails.id)
+      date: dateFormatted
     };
     
     // Send POST request to create the event

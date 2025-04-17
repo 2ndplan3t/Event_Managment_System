@@ -16,7 +16,6 @@ function ProfilePage() {
                     throw new Error("Profile data not found");
                 }
                 const data = await response.json();
-                console.log(data);
                 if (
                     data.userProfile[0].AddressLine == null ||
                     data.userProfile[0].City == null ||

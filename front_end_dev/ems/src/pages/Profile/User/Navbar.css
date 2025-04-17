@@ -44,3 +44,8 @@
     font-weight: bold;
     transition: color 0.2s;
   }
+  
+  .nav_buttons li:hover {
+    background-color: #b9c57f; 
+    border-color: #444034; 
+  }
