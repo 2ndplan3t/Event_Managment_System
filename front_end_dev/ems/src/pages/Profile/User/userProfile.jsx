@@ -59,6 +59,10 @@ function UserProfile({ onSubmit, existingData }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         // Send PUT request to backend to save data
+        if (formData.zipCode.length < 5) {
+            alert("Zip Code must be at least 5 digits.");
+            return;
+        }
         let userId = JSON.parse(localStorage.getItem("user")).id;
         fetch(`http://localhost:5000/api/profile/${userId}`, {
             method: "PUT",
@@ -184,6 +188,7 @@ function UserProfile({ onSubmit, existingData }) {
                             }
                         }}
                         maxLength={9}
+                        minLength={5}
                         required
                         className="userprofile-input"
                     />

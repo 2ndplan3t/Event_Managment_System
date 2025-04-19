@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import './App.css'
 import Home from './pages/FrontPage/home'
@@ -31,6 +31,8 @@ function App() {
         <Route path="/user" element={<ProfilePage />} />
         <Route path="/history" element={<VolunteerHistory />} />
         <Route path="/notifications" element={<Notifications />} />
+  
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
