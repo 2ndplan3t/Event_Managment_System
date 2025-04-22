@@ -319,8 +319,8 @@ app.post('/api/events', (req, res) => {
       return res.status(400).json({ message: 'Required fields are missing' });
     }
 
-    db.query("INSERT INTO eventlist (EventName, EventDesc, EventLocation, EventUrgency, EventDate, EventStatus) VALUES (?,?,?,?,?,?)", 
-      [name, envoy, location, urgencyLevel, date, "In Progress"], function(err, result){
+    db.query("INSERT INTO eventlist (EventName, EventDesc, EventLocation, EventUrgency, EventDate, EventManager, EventStatus) VALUES (?,?,?,?,?,?,?)", 
+      [name, envoy, location, urgencyLevel, date, manager, "In Progress"], function(err, result){
         /* istanbul ignore next */
         if(err) throw err;
         else{
@@ -545,6 +545,82 @@ app.delete('/api/events/:id', async (req, res) => {
   res.status(200).json({ message: 'Event deleted successfully. All users notified.' });
 });
 
+app.get('/api/managers', async(req, res) => {
+  try{
+    const managersByName = await new Promise((resolve, reject) => {
+      db.query("SELECT userprofile.UserID, userprofile.FullName FROM userprofile LEFT JOIN logininfo ON userprofile.UserID = logininfo.UserID WHERE UserRole = 'Manager'",  function(err, result) {
+          /* istanbul ignore next */
+          if (err) reject(err);  // Reject if issue
+          else resolve(result);   // Resolve if success
+      })
+    })
+    res.status(200).json(managersByName);
+  } catch (err){
+    console.error('Error fetching manager list:', err);
+    res.status(500).json({ message: 'Failed to retrieve managers.' });
+  }
+});
+
+// The two report gets:
+app.get('/api/reports/events', async(req, res) =>{
+  try{
+    // returns specifically what's needed for the reports.
+    const allEvents = await new Promise((resolve, reject) => {
+      db.query("SELECT * FROM eventlist",  function(err, result) {
+          if (err) reject(err);  // Reject if issue
+          else resolve(result);   // Resolve if success
+      })
+    })
+
+    const eventsWithVols = await Promise.all(
+      allEvents.map(async (event) => {
+        const selectedVolunteers = await new Promise((resolve, reject) => {
+          db.query(
+            `SELECT userprofile.FullName 
+             FROM eventvolmatch 
+             JOIN userprofile ON eventvolmatch.UserID = userprofile.UserID 
+             WHERE eventvolmatch.EventID = ?`,
+            [event.EventID],
+            (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+            }
+          );
+        });
+
+        return {
+          ...event,
+          selectedVolunteers, 
+        };
+      })
+    );
+
+    res.status(200).json(eventsWithVols);  
+  } catch(err){
+    console.error('Error fetching event report:', err);
+    res.status(500).json({ message: 'Failed to create Event History report.' });
+  }
+});
+
+app.get('/api/report/volunteer_history', async(req, res) =>{
+  try{
+    const allVolunteers = await new Promise((resolve, reject) => {
+    db.query(`SELECT FullName, EventName, EventDate, EventStatus FROM userprofile LEFT JOIN logininfo ON userprofile.UserID = logininfo.UserID 
+                  LEFT JOIN eventvolmatch ON eventvolmatch.UserID = logininfo.UserID 
+                  LEFT JOIN eventlist ON eventvolmatch.EventID = eventlist.EventID
+                  WHERE logininfo.userrole = 'Volunteer'
+                  GROUP BY userprofile.UserID, eventlist.EventID;`,  function(err, result) {
+        if (err) reject(err);  // Reject if issue
+        else resolve(result);   // Resolve if success
+      })
+    })
+    res.status(200).json(allVolunteers); 
+  } catch(err){
+    console.error('Error fetching volunteer report:', err);
+    res.status(500).json({ message: 'Failed to create Volunteer History report.' });
+  }
+});
+
 // Create a new volunteer
 /*istanbul ignore start */
 app.post('/api/volunteers', (req, res) => {
@@ -640,7 +716,6 @@ app.put("/api/profile/:id", async (req, res) => {
     skills,
     availability,
   } = req.body;
-  console.log('Request body:', req.body);
   // first, insert this into the table
   db.query("UPDATE userprofile SET FullName = ?, AddressLine = ?, AddressLine2 = ?, City = ?, State = ?, ZipCode = ?, Preferences = ? WHERE UserID = ?",
         [fullName, address1, address2, city, state, zipCode, preferences, userId], function(err){

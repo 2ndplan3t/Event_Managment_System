@@ -89,6 +89,9 @@ const AdminProfile = () => {
         <Link to="/">
           <button className="btn">Home</button>
         </Link>
+        <Link to ="/reports">
+          <button className="btn">Reports</button>
+        </Link>
         <button className = "btn" onClick={handleLogout}>Logout</button>
 
         

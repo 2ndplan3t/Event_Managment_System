@@ -124,7 +124,7 @@ function Notifications() {
                   <>
                     <h3>Event Assignment</h3>
                     <p>You have been <strong>assigned</strong> to <strong>{notif.name}</strong>.</p>
-                    <p><strong>Location:</strong>{notif.location}.</p>
+                    <p><strong>Location: </strong>{notif.location}.</p>
                     <p><strong>Event Date:</strong> {notif.date}</p>
                   </>
                 )}
@@ -133,7 +133,7 @@ function Notifications() {
                   <>
                     <h3>Event Removal</h3>
                     <p>You have been <strong>removed</strong> from <strong>{notif.name}</strong>.</p>
-                    <p><strong>Location:</strong> {notif.location}.</p>
+                    <p><strong>Location: </strong> {notif.location}.</p>
                   </>
                 )}
 
@@ -141,6 +141,14 @@ function Notifications() {
                   <>
                     <h3>Event Cancellation</h3>
                     <p>The event <strong>{notif.name}</strong> at <strong>{notif.location}</strong> has been <strong>cancelled</strong>.</p>
+                    <p><strong>Event Date:</strong> {notif.date}</p>
+                  </>
+                )}
+
+                {type === '24HReminder' && (
+                  <>
+                    <h3>Event Reminder</h3>
+                    <p>The event <strong>{notif.name}</strong> at <strong>{notif.location}</strong> that you have been assigned to is tomorrow!.</p>
                     <p><strong>Event Date:</strong> {notif.date}</p>
                   </>
                 )}

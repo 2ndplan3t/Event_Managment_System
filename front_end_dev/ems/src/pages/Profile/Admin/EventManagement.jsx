@@ -15,6 +15,7 @@ const skillOptions = [
 
 const EventManagement = () => {
   const [events, setEvents] = useState([]);
+  const [managers, setManagers] = useState([]);
   const [eventDetails, setEventDetails] = useState({
     name: '',
     location: '',
@@ -30,6 +31,7 @@ const EventManagement = () => {
   // Fetch all events from the backend when component mounts
   useEffect(() => {
     fetchEvents();
+    fetchManagers();
   }, []);
 
 // Fetch all events
@@ -56,6 +58,22 @@ const fetchEvents = async () => {
   }
 };
 
+
+  // Fetch all managers
+  const fetchManagers = async () => {
+    const response = await fetch('http://localhost:5000/api/managers'); 
+    if (response.ok) {
+      const data = await response.json();
+      const managerOptions = data.map(manager => ({
+        value: manager.UserID,
+        label: manager.FullName
+      }));
+      setManagers(managerOptions); 
+    } else {
+      console.error('Failed to fetch managers');
+    }
+  };
+
   const handleEventChange = (e) => {
     const { name, value } = e.target;
     setEventDetails({ ...eventDetails, [name]: value });
@@ -69,8 +87,8 @@ const fetchEvents = async () => {
     setEventDetails({ ...eventDetails, date });
   };
 
-  const handleVolunteerChange = (selectedOptions) => {
-    setEventDetails({ ...eventDetails, selectedVolunteers: selectedOptions || [] });
+  const handleManagerChange = (selectedOption) => {
+    setEventDetails({ ...eventDetails, manager: selectedOption ? selectedOption.label : '' });
   };
 
   // Create event
@@ -89,6 +107,7 @@ const fetchEvents = async () => {
       alert("Please select at least one required skill.");
       return;
     }
+
     if (!eventDetails.manager.trim()) {
       alert("Please select a manager for the event.");
       return;
@@ -234,6 +253,26 @@ const fetchEvents = async () => {
     }
   };
 
+  const customSelectStyles = {
+    control: (provided) => ({
+      ...provided,
+      backgroundColor: '#444034', 
+      borderColor: '#444034', 
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: 'white',  
+    }),
+    option: (provided) => ({
+      ...provided,
+      backgroundColor: 'white',
+      color: 'black', 
+    }),
+    menu: (provided) => ({
+      ...provided,
+      backgroundColor: 'white',
+    })
+  };
 
   return (
     <div className="event-management-container">
@@ -254,7 +293,13 @@ const fetchEvents = async () => {
       </select>
 
       <h4>Event Managers</h4>
-      <input type="text" name="manager" value={eventDetails.manager} onChange={handleEventChange} placeholder="Manager Name" />
+      <Select 
+        options={managers} 
+        value={managers.find(manager => manager.value === eventDetails.manager)} 
+        onChange={handleManagerChange} 
+        placeholder="Select Manager" 
+        styles={customSelectStyles}
+      />
 
       <h4>Select Event Date:</h4>
       <Calendar onChange={handleDateChange} value={eventDetails.date} />

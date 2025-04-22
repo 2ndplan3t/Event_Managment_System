@@ -9,6 +9,7 @@ import EventForm from './pages/Profile/Admin/AdminEventForm';
 import ProfilePage from './pages/Profile/User/ProfilePage';
 import VolunteerHistory from './pages/Profile/User/VolunteerHistory';
 import Notifications from './pages/Notifications/Notifications';
+import Reports from './pages/Reports/AdminReports'
 import { useEffect } from 'react';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
         <Route path="/user" element={<ProfilePage />} />
         <Route path="/history" element={<VolunteerHistory />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/reports" element={<Reports />} />
   
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
