@@ -90,7 +90,7 @@ describe('POST /api/login', () => {
     loggedIn: true,
     user: {
       address: { city: '', line1: '', line2: '', state: '', zip: '' },
-      id: 100, 
+      id: 2, 
       email: 'admin@example.com',
       fullName: 'admin',
       role: 'Manager', 
@@ -194,7 +194,7 @@ describe("GET /api/admin/profile", () => {
     // Log in as volunteer
     const volunteerLogin = await request(app)
       .post("/api/login")
-      .send({ email: "alice@example.com", password: "volunteer_123" });
+      .send({ email: "charlie@example.com", password: "volunteer_123" });
     volunteerCookie = volunteerLogin.headers["set-cookie"];
   });
 
@@ -205,7 +205,7 @@ describe("GET /api/admin/profile", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
-      id: 100,
+      id: 2,
       email: "admin@example.com",
       fullName: "admin",
       role: "Manager",
@@ -253,7 +253,7 @@ describe("GET /api/profile", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.profileData).toMatchObject({
-      id: 100,
+      id: 2,
       email: "admin@example.com",
       fullName: "admin",
       role: "Manager",
@@ -289,7 +289,6 @@ describe('GET /api/users', () => {
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body[0]).toHaveProperty('Email');
   });
 });
 

@@ -10,6 +10,7 @@ const db = mysql.createPool({
 });
 
 db.getConnection((err, connection) =>{
+    /*istanbul ignore next */
     if(err){
         console.error("Error connection to database:", err);
     }

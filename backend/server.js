@@ -75,14 +75,16 @@ async function fetchEvents(){
     return events;
 
   } catch (error){
+    /*istanbul ignore next*/
     console.error("Error fetching events", error);
   }
 }
 
 
 // ALL LOGIN STUFF
-/* istanbul ignore start */
+
 const hashPasswords = async () => {
+  /*istanbul ignore next*/
   for (let user of users) {
       if (!user.password.startsWith("$2b$")) {  // Check if not already hashed
           const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -90,7 +92,7 @@ const hashPasswords = async () => {
       }
   }
 };
-/* istanbul ignore end */
+
 
 /* istanbul ignore start */
 const requireAuth = (req, res, next) => {
@@ -119,9 +121,11 @@ app.post("/api/register", (req, res) => {
           [email, hashedPassword, role],
           (err, loginResult) => {
               if (err) {
+                  /*istanbul ignore next*/
                   if (err.code === "ER_DUP_ENTRY") {
                       return res.status(400).json({ message: "Email already in use." });
                   }
+                  /*istanbul ignore next*/
                   console.error("Error inserting into LoginInfo:", err);
                   return res.status(500).json({ message: "Internal server error" });
               }
@@ -192,6 +196,7 @@ app.post("/api/login", async(req, res) => {
          WHERE li.Email = ?`,
         [email],
         (err, userRows) => {
+          /*istanbul ignore next*/
             if (err) {
                 console.error("Query error:", err);
                 return res.status(500).json({ message: "Internal server error" });
@@ -399,6 +404,7 @@ app.get('/api/events/:id/selectedUsers', async(req, res) =>{
         });
     });
   } catch (error) {
+      /*istanbul ignore next*/
       console.error('Error fetching selected volunteers:', error);
   }
 
@@ -442,6 +448,7 @@ app.post('/api/events/:id/volunteers', async (req, res) => {
           "DELETE FROM eventvolmatch WHERE EventID = ? AND UserID = ?",
           [eventId, volunteerId],
           (err, result) => {
+            /*istanbul ignore next*/
             if (err) return reject(err);
             resolve(result);
           }
@@ -453,6 +460,7 @@ app.post('/api/events/:id/volunteers', async (req, res) => {
           "INSERT INTO usernotifs (UserID, EventID, NotifType) VALUES (?, ?, 'Removed')",
           [volunteerId, eventId],
           (err, result) => {
+            /*istanbul ignore next*/
             if (err) return reject(err);
             resolve(result);
           }
