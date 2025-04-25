@@ -33,11 +33,7 @@
     color: #444034; 
     font-weight: bold; 
     transition: color 0.3s; 
-  }
-  
-  .navbar a:hover {
-    color: #444034;; 
-  }  
+  } 
 
   .navbar ul li span {
     cursor: pointer;         
@@ -46,7 +42,6 @@
     transition: color 0.2s;
   }
   
-  .nav_buttons li:hover {
-    background-color: #b9c57f; 
-    border-color: #444034; 
+  .navbar a:hover,.navbar ul li span:hover {
+    color: #f0e7c6; /* hover color */
   }
