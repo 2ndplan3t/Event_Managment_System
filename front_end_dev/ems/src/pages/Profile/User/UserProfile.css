@@ -2,6 +2,7 @@
 
 /* green box styling */
 .userprofile-form {
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 17px; 
@@ -134,6 +135,44 @@
 
 .remove-button:hover {
   background-color: #576127;
+}
+
+.edit-profile-button{
+  margin-top: 30px;
+  padding: 10px 15px;
+  font-weight: bold; 
+  background-color: #8c9657; 
+  color: #444034; 
+  border: 1px solid #8c9657; 
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center; 
+  transition: background-color 0.3s ease, color 0.3s ease; 
+}
+
+/* button hover effect */
+.edit-profile-button:hover {
+  background-color: #b9c57f; 
+  color: #f0e7c6; 
+  border-color: #8c9657; 
+}
+
+.add-button{
+  padding: 10px 15px;
+  margin-top: 15px;
+  background-color: #f0e7c6; 
+  color: #444034; 
+  border: 1px solid #8c9657; 
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center; 
+  transition: background-color 0.3s ease, color 0.3s ease; 
+}
+
+.add-button:hover {
+  background-color: #b9c57f; 
+  color: #f0e7c6; 
+  border-color: #8c9657; 
 }
 
 
