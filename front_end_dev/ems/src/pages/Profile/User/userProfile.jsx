@@ -87,11 +87,16 @@ function UserProfile({ onSubmit, existingData }) {
     };
 
     const handleAddAvailability = () => {
-        if (newAvailability && !formData.availability.includes(newAvailability)) {
-            setFormData(prevState => ({
-                ...prevState,
-                availability: [...prevState.availability, newAvailability]
-            }));
+        if (newAvailability) {
+            const date = new Date(newAvailability);
+            const formatted = date.toLocaleDateString("en-US");
+    
+            if (!formData.availability.includes(formatted)) {
+                setFormData(prevState => ({
+                    ...prevState,
+                    availability: [...prevState.availability, formatted]
+                }));
+            }
             setNewAvailability("");
         }
     };
