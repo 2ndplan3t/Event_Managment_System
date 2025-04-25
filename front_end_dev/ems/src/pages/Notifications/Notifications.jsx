@@ -103,13 +103,7 @@ function Notifications() {
     <div className="no-global-reset">
     <div className="root">
       <header className="notif_page">
-        <div className="nav_buttons"> 
-         <Link to="/"> <button type="button">Home</button> </Link>
-         <Link to="/user"> <button type="button">Profile</button> </Link>
-         <Link to="/notifications"><button type="button">Notifications</button></Link>
-         <Link to="/history"><button type="button">History</button></Link>
-         <button onClick={handleLogout}>Logout</button>
-        </div>
+      <Navbar />
        
         <h1>Notifications</h1>
         </header>
